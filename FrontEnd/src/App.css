@@ -113,6 +113,18 @@
   box-shadow: 0 20px 55px rgba(15, 23, 42, 0.15);
 }
 
+.border-glow-red {
+  border-color: rgba(248, 113, 113, 0.4);
+  box-shadow: 0 0 35px rgba(248, 113, 113, 0.35),
+    0 15px 45px rgba(15, 23, 42, 0.25);
+  transition: box-shadow 0.3s ease;
+}
+
+.border-glow-red:hover {
+  box-shadow: 0 0 40px rgba(248, 113, 113, 0.55),
+    0 20px 60px rgba(15, 23, 42, 0.3);
+}
+
 .shadow-soft {
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
 }

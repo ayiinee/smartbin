@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import fallbackHero from '../assets/smartbin-ai.png';
 import SmartbinLogo from '../components/SmartbinLogo.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const parallaxFrameModules = import.meta.glob('../assets/parallax/*.png', {
   eager: true,
@@ -58,7 +59,13 @@ const ParallaxLayer = ({ className = '', style, children }) => (
   </div>
 );
 
-const HeroOverlay = ({ align = 'center', headlineStyle, subheadlineStyle, ctaStyle }) => {
+const HeroOverlay = ({
+  align = 'center',
+  headlineStyle,
+  subheadlineStyle,
+  ctaStyle,
+  onDashboardClick,
+}) => {
   const alignment = overlayAlignments[align] || overlayAlignments.center;
 
   return (
@@ -87,7 +94,11 @@ const HeroOverlay = ({ align = 'center', headlineStyle, subheadlineStyle, ctaSty
           >
             Book a Demo
           </button>
-          <button className="h-12 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:border-white/60 hover:bg-white/15">
+          <button
+            type="button"
+            onClick={onDashboardClick}
+            className="h-12 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:border-white/60 hover:bg-white/15"
+          >
             <span className="flex items-center gap-2">
               <PlayCircle className="h-5 w-5 text-emerald-200" />
               See the Dashboard
@@ -99,7 +110,7 @@ const HeroOverlay = ({ align = 'center', headlineStyle, subheadlineStyle, ctaSty
   );
 };
 
-const ParallaxHero = ({ overlayAlign = 'left' }) => {
+const ParallaxHero = ({ overlayAlign = 'left', onDashboardClick }) => {
   const [heroScroll, setHeroScroll] = useState(0);
   const [heroMaxScroll, setHeroMaxScroll] = useState(1);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -262,6 +273,7 @@ const ParallaxHero = ({ overlayAlign = 'left' }) => {
             align={overlayAlign}
             headlineStyle={headlineStyle}
             subheadlineStyle={subheadlineStyle}
+            onDashboardClick={onDashboardClick}
           />
         </div>
       </div>
@@ -662,7 +674,7 @@ const ComparisonSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 items-stretch">
-          <div className="group relative rounded-2xl overflow-hidden border border-red-100 bg-red-50 hover:bg-red-100/50 transition-colors flex flex-col">
+          <div className="group relative rounded-2xl overflow-hidden border border-red-100 bg-red-50 hover:bg-red-100/50 transition-colors flex flex-col border-glow-red">
             <div className="p-8 pb-0">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-red-100 text-red-500">
@@ -1134,11 +1146,14 @@ const Footer = () => {
 };
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  const handleDashboardClick = () => navigate('/dashboard');
+
   return (
     <div className="bg-white">
       <NavBar />
       <main>
-        <ParallaxHero overlayAlign="left" />
+        <ParallaxHero overlayAlign="left" onDashboardClick={handleDashboardClick} />
         <TrustedBy />
         <Features />
         <HowItWorks />
