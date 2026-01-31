@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statistics Dashboard · AudioDetectionBottle</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #111a2e;
+        --text: #e6eefc;
+        --muted: #9bb0d0;
+        --accent: #7aa7ff;
+        --ok: #27c08b;
+        --warn: #ffcc66;
+        --bad: #ff5c6c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1200px 800px at 20% 10%, #152347 0%, var(--bg) 55%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      .wrap { max-width: 1100px; margin: 0 auto; }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .nav a {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .nav a:hover { text-decoration: underline; }
+      h1 { margin: 0 0 8px; font-size: 24px; }
+      .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .card {
+        background: color-mix(in oklab, var(--card) 92%, black 8%);
+        border: 1px solid rgba(122, 167, 255, 0.18);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      }
+      .card h2 {
+        margin: 0 0 16px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .chart-wrap { position: relative; height: 260px; }
+      .table-wrap { overflow-x: auto; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .pill.bottle { background: rgba(39, 192, 139, 0.2); color: #7dffc9; }
+      .pill.anomaly { background: rgba(255, 92, 108, 0.2); color: #ffb3ba; }
+      .pill.plastic { background: rgba(122, 167, 255, 0.25); color: #a8c7ff; }
+      .pill.glass { background: rgba(155, 176, 208, 0.25); color: #c5d4f0; }
+      .pill.metal { background: rgba(255, 204, 102, 0.25); color: #ffe4a3; }
+      .api-url {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+      .api-url input {
+        width: 100%;
+        max-width: 400px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text);
+        font-family: ui-monospace, monospace;
+      }
+      .load-btn {
+        appearance: none;
+        background: linear-gradient(180deg, #2f5cff 0%, #2043c9 100%);
+        border: 1px solid rgba(122, 167, 255, 0.35);
+        color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .load-btn:hover { opacity: 0.9; }
+      .load-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .empty { color: var(--muted); font-size: 14px; padding: 20px; text-align: center; }
+      .total-badge {
+        display: inline-block;
+        background: rgba(122, 167, 255, 0.2);
+        color: var(--accent);
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav class="nav">
+        <a href="av.html">Audio + Visual</a>
+        <a href="audio.html">Audio Only</a>
+        <a href="visual.html">Visual Only</a>
+        <a href="dashboard.html">Dashboard</a>
+      </nav>
+      <h1>Statistics Dashboard</h1>
+      <p class="sub">Aggregated detection results and confidence from the prediction API.</p>
+
+      <div class="api-url">
+        <label for="apiBase">API base URL:</label>
+        <input id="apiBase" type="text" value="" placeholder="http://localhost:8000" />
+        <button id="loadBtn" class="load-btn" style="margin-left: 8px; margin-top: 8px;">Load stats</button>
+      </div>
+
+      <div id="totalBadge" class="total-badge" style="display: none;">Total: 0 detections</div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Trash types (distribution)</h2>
+          <div class="chart-wrap">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Detection confidence (recent)</h2>
+          <div class="chart-wrap">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h2>Peak times (detections per hour UTC)</h2>
+        <div class="chart-wrap" style="height: 200px;">
+          <canvas id="peakChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h2>Recent detection history</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time (UTC)</th>
+                <th>Label</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="4" class="empty">Load stats to see recent detections.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const apiBaseEl = document.getElementById("apiBase");
+      const loadBtn = document.getElementById("loadBtn");
+      const totalBadge = document.getElementById("totalBadge");
+      const historyBody = document.getElementById("historyBody");
+
+      (function initApiBase() {
+        const ok = (window.location.protocol === "http:" || window.location.protocol === "https:");
+        const base = ok ? window.location.origin : "http://localhost:8000";
+        if (!apiBaseEl.value.trim()) apiBaseEl.value = base;
+      })();
+
+      let pieChart = null;
+      let barChart = null;
+      let peakChart = null;
+
+      const PIE_COLORS = {
+        bottle: "rgba(39, 192, 139, 0.8)",
+        anomaly: "rgba(255, 92, 108, 0.8)",
+        plastic: "rgba(122, 167, 255, 0.8)",
+        glass: "rgba(155, 176, 208, 0.8)",
+        metal: "rgba(255, 204, 102, 0.8)",
+      };
+      const DEFAULT_COLORS = [
+        "rgba(122, 167, 255, 0.8)",
+        "rgba(39, 192, 139, 0.8)",
+        "rgba(255, 204, 102, 0.8)",
+        "rgba(255, 92, 108, 0.8)",
+        "rgba(180, 140, 255, 0.8)",
+      ];
+
+      function pickColor(label, i) {
+        const k = String(label).toLowerCase();
+        return PIE_COLORS[k] || DEFAULT_COLORS[i % DEFAULT_COLORS.length];
+      }
+
+      function pillClass(label) {
+        const k = String(label).toLowerCase();
+        if (["bottle", "anomaly", "plastic", "glass", "metal"].includes(k)) return k;
+        return "bottle";
+      }
+
+      function formatTime(iso) {
+        if (!iso) return "—";
+        try {
+          const d = new Date(iso);
+          return d.toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "short", timeStyle: "medium" });
+        } catch (_) {
+          return iso;
+        }
+      }
+
+      async function fetchStats() {
+        let base = apiBaseEl.value.trim().replace(/\/$/, "");
+        if (!base) base = (window.location.protocol === "http:" || window.location.protocol === "https:") ? window.location.origin : "http://localhost:8000";
+        const url = base ? `${base}/api/stats` : "/api/stats";
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text().catch(() => r.statusText)}`);
+        return await r.json();
+      }
+
+      function renderPie(data) {
+        const dist = data.distribution_by_category || {};
+        let labels = Object.keys(dist);
+        let values = labels.map((l) => dist[l]);
+        let colors = labels.map((l, i) => pickColor(l, i));
+        if (labels.length === 0) {
+          labels = ["No data"];
+          values = [1];
+          colors = ["rgba(128,128,128,0.4)"];
+        }
+
+        const ctx = document.getElementById("pieChart").getContext("2d");
+        if (pieChart) pieChart.destroy();
+        pieChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+            },
+          },
+        });
+      }
+
+      function renderBar(data) {
+        const recent = data.recent_activity || [];
+        const labels = recent.map((r, i) => `#${r.id || i + 1}`);
+        const values = recent.map((r) => (r.confidence_score != null ? Number(r.confidence_score) : 0));
+
+        const ctx = document.getElementById("barChart").getContext("2d");
+        if (barChart) barChart.destroy();
+        barChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "Confidence",
+              data: values,
+              backgroundColor: "rgba(122, 167, 255, 0.6)",
+              borderColor: "rgba(122, 167, 255, 0.9)",
+              borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, max: 1, ticks: { stepSize: 0.2 } },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      }
+
+      function renderPeak(data) {
+        const raw = data.peak_times || {};
+        const labels = [];
+        const values = [];
+        for (let h = 0; h < 24; h++) {
+          const k = String(h).padStart(2, "0");
+          labels.push(k + ":00");
+          values.push(Number(raw[k] ?? raw[h] ?? 0));
+        }
+
+        const ctx = document.getElementById("peakChart").getContext("2d");
+        if (peakChart) peakChart.destroy();
+        peakChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "Detections",
+              data: values,
+              backgroundColor: "rgba(39, 192, 139, 0.5)",
+              borderColor: "rgba(39, 192, 139, 0.8)",
+              borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, ticks: { stepSize: 1 } },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      }
+
+      function renderTable(data) {
+        const recent = data.recent_activity || [];
+        if (recent.length === 0) {
+          historyBody.innerHTML = '<tr><td colspan="4" class="empty">No recent detections.</td></tr>';
+          return;
+        }
+        historyBody.innerHTML = recent
+          .map(
+            (r) =>
+              `<tr>
+                <td>${r.id ?? "—"}</td>
+                <td>${formatTime(r.timestamp)}</td>
+                <td><span class="pill ${pillClass(r.detected_label)}">${r.detected_label ?? "—"}</span></td>
+                <td>${r.confidence_score != null ? Number(r.confidence_score).toFixed(2) : "—"}</td>
+              </tr>`
+          )
+          .join("");
+      }
+
+      function run() {
+        loadBtn.disabled = true;
+        loadBtn.textContent = "Loading…";
+        fetchStats()
+          .then((data) => {
+            totalBadge.style.display = "inline-block";
+            totalBadge.textContent = `Total: ${data.total_count ?? 0} detections`;
+            renderPie(data);
+            renderBar(data);
+            renderPeak(data);
+            renderTable(data);
+          })
+          .catch((err) => {
+            totalBadge.style.display = "none";
+            historyBody.innerHTML = `<tr><td colspan="4" class="empty">Error: ${err.message}. Is the API running at ${apiBaseEl.value.trim()}?</td></tr>`;
+            if (pieChart) {
+              pieChart.destroy();
+              pieChart = null;
+            }
+            if (barChart) {
+              barChart.destroy();
+              barChart = null;
+            }
+            if (peakChart) {
+              peakChart.destroy();
+              peakChart = null;
+            }
+          })
+          .finally(() => {
+            loadBtn.disabled = false;
+            loadBtn.textContent = "Load stats";
+          });
+      }
+
+      loadBtn.addEventListener("click", run);
+
+      // Optional: auto-load on open if same origin won’t block
+      run();
+    </script>
+  </body>
+</html>

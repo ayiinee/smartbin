@@ -1,1 +1,1 @@
-Place your model.h5 and scaler.pkl (or encoder.pkl) in this folder.
+Place your model.h5 and label_encoder.pkl in this folder.
