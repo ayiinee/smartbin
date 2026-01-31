@@ -38,6 +38,7 @@ export default function SmartbinDemo() {
   const [rmsLevel, setRmsLevel] = useState(0);
   const [threshold, setThreshold] = useState(0.4);
   const [statusLabel, setStatusLabel] = useState("MONITORING");
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
   const detected = Boolean(latestVisual);
   const audioSummary = useMemo(() => {
@@ -238,6 +239,8 @@ export default function SmartbinDemo() {
 
       const visual = payload.visual || {};
       const audio = payload.audio || {};
+      const visualError = payload?.errors?.visual;
+      const audioError = payload?.errors?.audio;
 
       if (payload?.annotated_image) {
         const raw = payload.annotated_image;
@@ -249,7 +252,10 @@ export default function SmartbinDemo() {
         setAnnotatedImage("");
       }
 
-      if (visual?.label) {
+      if (visualError) {
+        setLatestVisual(null);
+        setVisualFeed(`Visual error: ${visualError}`);
+      } else if (visual?.label) {
         setLatestVisual({
           label: visual.label,
           confidence: visual.confidence || 0,
@@ -260,7 +266,10 @@ export default function SmartbinDemo() {
         setVisualFeed("No object detected");
       }
 
-      if (audio?.label) {
+      if (audioError) {
+        setLatestAudio(null);
+        setAudioFeed(`Audio error: ${audioError}`);
+      } else if (audio?.label) {
         setLatestAudio({
           label: audio.label,
           confidence: audio.confidence || 0,
@@ -282,7 +291,7 @@ export default function SmartbinDemo() {
   };
 
   useEffect(() => {
-    if (!cameraReady || !streamRef.current) return;
+    if (!cameraReady || !streamRef.current || !isMonitoring) return;
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContextRef.current = audioContext;
@@ -331,7 +340,32 @@ export default function SmartbinDemo() {
         audioContextRef.current = null;
       }
     };
-  }, [cameraReady, threshold]);
+  }, [cameraReady, isMonitoring, threshold]);
+
+  const handleToggleMonitoring = async () => {
+    if (!cameraReady) return;
+    if (isMonitoring) {
+      setIsMonitoring(false);
+      setStatusLabel("PAUSED");
+      setVisualFeed("Waiting for object...");
+      setAudioFeed("Listening...");
+      return;
+    }
+    setIsMonitoring(true);
+    setStatusLabel("MONITORING");
+    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+      try {
+        await audioContextRef.current.resume();
+      } catch (error) {
+        // Ignore resume errors; browser will handle user gesture constraints.
+      }
+    }
+  };
+
+  const handleManualDetect = () => {
+    if (!cameraReady) return;
+    runDetection();
+  };
 
   const handleConfirm = () => {
     setToast("Data saved!");
@@ -408,6 +442,23 @@ export default function SmartbinDemo() {
                   />
                 ) : null}
               </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleToggleMonitoring}
+                className="rounded-full border border-[#228B22] bg-[#E7F6E7] px-4 py-2 text-sm font-semibold text-[#228B22] transition hover:bg-[#D8F0D8]"
+              >
+                {isMonitoring ? "Stop Detection" : "Start Detection"}
+              </button>
+              <button
+                type="button"
+                onClick={handleManualDetect}
+                className="rounded-full border border-[#1F2937] px-4 py-2 text-sm font-semibold text-[#1F2937] transition hover:bg-[#F1F5F9]"
+              >
+                Detect Now
+              </button>
             </div>
 
             {detected && (

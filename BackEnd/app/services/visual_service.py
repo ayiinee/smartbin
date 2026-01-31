@@ -26,6 +26,9 @@ class VisualService:
         self.workflow_id = os.getenv("ROBOFLOW_WORKFLOW_ID", "").strip()
         self.workflow_workspace = workflow_workspace
         self.workflow_api_url = os.getenv("ROBOFLOW_WORKFLOW_API_URL", "https://detect.roboflow.com").strip()
+        self.workflow_image_input = os.getenv("ROBOFLOW_WORKFLOW_IMAGE_INPUT", "image").strip() or "image"
+        self.workflow_predictions_key = os.getenv("ROBOFLOW_WORKFLOW_PREDICTIONS_KEY", "predictions").strip()
+        self.workflow_output_image_key = os.getenv("ROBOFLOW_WORKFLOW_OUTPUT_IMAGE_KEY", "output_image").strip()
 
         if not model_id:
             model_id = os.getenv("ROBOFLOW_MODEL_ID", "").strip()
@@ -158,13 +161,13 @@ class VisualService:
                 result = self.workflow_client.run_workflow(
                     workspace_name=self.workflow_workspace,
                     workflow_id=self.workflow_id,
-                    images={"image": b64_string},
+                    images={self.workflow_image_input: b64_string},
                 )
             elif hasattr(self.workflow_client, "infer_from_workflow"):
                 result = self.workflow_client.infer_from_workflow(
                     workspace_name=self.workflow_workspace,
                     workflow_name=self.workflow_id,
-                    images={"image": b64_string},
+                    images={self.workflow_image_input: b64_string},
                 )
             else:
                 raise RuntimeError("Inference SDK does not support workflow execution.")
@@ -174,16 +177,19 @@ class VisualService:
         normalized = self._normalize_workflow_result(result)
         return normalized
 
-    @staticmethod
-    def _normalize_workflow_result(result: Any) -> Dict[str, Any]:
+    def _normalize_workflow_result(self, result: Any) -> Dict[str, Any]:
         if isinstance(result, list) and result:
             result = result[0]
 
         outputs = result.get("outputs") if isinstance(result, dict) else None
         candidate = outputs if outputs is not None else result
 
-        annotated_image = VisualService._extract_base64_image(candidate)
-        detections = VisualService._extract_predictions(result)
+        annotated_image = self._extract_base64_image(candidate)
+        if not annotated_image and self.workflow_output_image_key:
+            annotated_image = self._extract_base64_image(
+                result.get(self.workflow_output_image_key) if isinstance(result, dict) else None
+            )
+        detections = self._extract_predictions(result, self.workflow_predictions_key)
 
         return {
             "detections": detections,
@@ -215,26 +221,28 @@ class VisualService:
         return None
 
     @staticmethod
-    def _extract_predictions(obj: Any) -> List[Dict[str, Any]]:
+    def _extract_predictions(obj: Any, preferred_key: str | None = None) -> List[Dict[str, Any]]:
         if obj is None:
             return []
 
         if isinstance(obj, dict):
+            if preferred_key and preferred_key in obj and isinstance(obj[preferred_key], list):
+                return VisualService._normalize_predictions(obj[preferred_key])
             if "predictions" in obj and isinstance(obj["predictions"], list):
                 return VisualService._normalize_predictions(obj["predictions"])
             for key in ("detections", "results", "output"):
                 if key in obj:
-                    preds = VisualService._extract_predictions(obj[key])
+                    preds = VisualService._extract_predictions(obj[key], preferred_key)
                     if preds:
                         return preds
             for value in obj.values():
-                preds = VisualService._extract_predictions(value)
+                preds = VisualService._extract_predictions(value, preferred_key)
                 if preds:
                     return preds
 
         if isinstance(obj, list):
             for item in obj:
-                preds = VisualService._extract_predictions(item)
+                preds = VisualService._extract_predictions(item, preferred_key)
                 if preds:
                     return preds
 
