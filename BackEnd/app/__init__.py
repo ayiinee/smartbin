@@ -5,6 +5,15 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from app.config import Config
+from app.extensions import db, migrate, cors, sock
+from app.api.dashboard import dashboard_bp
+from app.api.validation import validation_bp
+from app.api.bins import bins_bp
+from app.api.analytics import analytics_bp
+from app.api.reports import reports_bp
+from app.routes.ai_routes import ai_bp
+
 try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover - optional dependency
@@ -16,15 +25,21 @@ def create_app() -> Flask:
         load_dotenv()
 
     app = Flask(__name__)
+    app.config.from_object(Config)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
 
+    # init extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
     CORS(app)
+    sock.init_app(app)
 
-    from app.routes.ai_routes import ai_bp
+    # ensure models are registered for migrations
+    from app.db_models import models  # noqa: F401
 
-    app.register_blueprint(ai_bp, url_prefix="/api")
-
-    @app.get("/")
+    # health check
+    @app.get("/api/health")
     def health():
         return jsonify({"status": "ok", "service": "smartbin-api"})
 
@@ -39,5 +54,13 @@ def create_app() -> Flask:
     @app.errorhandler(500)
     def server_error(err):
         return jsonify({"error": "server_error", "message": str(err)}), 500
+
+    # register blueprints
+    app.register_blueprint(ai_bp, url_prefix="/api")
+    app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
+    app.register_blueprint(validation_bp, url_prefix="/api/validation")
+    app.register_blueprint(bins_bp, url_prefix="/api/bins")
+    app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
+    app.register_blueprint(reports_bp, url_prefix="/api/reports")
 
     return app

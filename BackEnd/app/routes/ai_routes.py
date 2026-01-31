@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import base64
+import json
 
 from flask import Blueprint, jsonify, request
 
+from app.extensions import sock
 from app.services.audio_service import AudioService
 from app.services.visual_service import VisualService
 
@@ -25,14 +27,16 @@ def predict_visual():
         if "file" in request.files:
             file = request.files["file"]
             image_bytes = file.read()
-            detections = service.detect_from_file_bytes(image_bytes)
+            result = service.detect_from_file_bytes(image_bytes)
         else:
             b64 = _get_base64_from_request()
             if not b64:
                 return jsonify({"error": "No image provided"}), 400
-            detections = service.detect_from_base64(b64)
+            result = service.detect_from_base64(b64)
 
-        return jsonify({"detections": detections})
+        detections = result.get("detections", []) if isinstance(result, dict) else result
+        annotated_image = result.get("annotated_image") if isinstance(result, dict) else None
+        return jsonify({"detections": detections, "annotated_image": annotated_image})
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -61,3 +65,74 @@ def predict_audio():
         return jsonify(result)
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
+
+
+@ai_bp.post("/predict/multimodal")
+def predict_multimodal():
+    try:
+        service = VisualService()
+        audio_service = AudioService()
+
+        visual_result = {
+            "label": None,
+            "confidence": 0.0,
+            "detections": [],
+            "annotated_image": None,
+        }
+        audio_result = {"label": None, "confidence": 0.0}
+
+        if "image" in request.files:
+            image_bytes = request.files["image"].read()
+            if image_bytes:
+                visual_payload = service.detect_from_file_bytes(image_bytes)
+                detections = visual_payload.get("detections", [])
+                annotated_image = visual_payload.get("annotated_image")
+                visual_result["detections"] = detections
+                visual_result["annotated_image"] = annotated_image
+                if detections:
+                    top = max(detections, key=lambda item: item.get("confidence", 0.0))
+                    visual_result["label"] = top.get("label")
+                    visual_result["confidence"] = float(top.get("confidence", 0.0))
+
+        if "audio" in request.files:
+            audio_bytes = request.files["audio"].read()
+            if audio_bytes:
+                audio_payload = audio_service.predict(audio_bytes)
+                audio_result["label"] = audio_payload.get("label")
+                audio_result["confidence"] = float(audio_payload.get("confidence", 0.0))
+
+        final_label = visual_result["label"] or audio_result["label"]
+        final_confidence = max(
+            visual_result["confidence"] or 0.0, audio_result["confidence"] or 0.0
+        )
+
+        return jsonify(
+            {
+                "visual": visual_result,
+                "audio": audio_result,
+                "final_decision": final_label,
+                "confidence_score": final_confidence,
+                "annotated_image": visual_result["annotated_image"],
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@sock.route("/api/stream/visual")
+def stream_visual(ws):
+    service = VisualService()
+    while True:
+        message = ws.receive()
+        if message is None:
+            break
+        try:
+            payload = json.loads(message) if message else {}
+            b64 = payload.get("image_base64") or ""
+            if not b64:
+                ws.send(json.dumps({"error": "No image provided"}))
+                continue
+            result = service.detect_from_base64(b64)
+            ws.send(json.dumps(result))
+        except Exception as exc:
+            ws.send(json.dumps({"error": str(exc)}))

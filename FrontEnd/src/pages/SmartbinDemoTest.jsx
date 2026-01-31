@@ -4,131 +4,62 @@ export default function SmartbinDemoTest() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen text-[#EAF6F0]">
-      <div className="sb-stage sb-grid absolute inset-0 -z-10" />
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-12">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="h-3 w-3 rounded-full bg-[var(--sb-emerald)] shadow-[0_0_12px_rgba(46,227,125,0.8)]" />
-            <span className="font-display text-xs uppercase tracking-[0.4em] text-[var(--sb-mint)]">
-              SmartBin AI
-            </span>
+    <div className="min-h-screen bg-[#F5F7F5] text-[#333333]">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(135,206,235,0.25),_rgba(245,247,245,0.9)_45%)]" />
+      <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-14">
+        <header className="flex items-center justify-between">
+          <div className="text-sm font-semibold uppercase tracking-[0.3em] text-[#228B22]">
+            SmartBin
           </div>
-          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-[var(--sb-stone)]">
-            Demo access ? Multimodal intelligence
-          </div>
+          <div className="text-xs text-[#6B7280]">Demo access</div>
         </header>
 
-        <section className="mt-14 grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-8">
-            <div className="sb-card sb-glow rounded-[28px] p-8">
-              <p className="text-xs uppercase tracking-[0.35em] text-[var(--sb-stone)]">
-                Intelligent waste monitoring
-              </p>
-              <h1 className="font-display mt-4 text-4xl font-semibold leading-tight sm:text-5xl">
-                SmartBin AI Demo Interface
-              </h1>
-              <p className="mt-4 max-w-xl text-base text-[var(--sb-stone)] sm:text-lg">
-                Experience how visual and audio intelligence classify waste in
-                seconds, then capture the correction loop for continuous
-                learning.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/demo-smartbin/live")}
-                  className="rounded-full bg-[var(--sb-emerald)] px-6 py-3 text-sm font-semibold text-[#07130f] shadow-[0_12px_28px_rgba(46,227,125,0.35)] transition hover:-translate-y-0.5"
-                >
-                  Launch Live Demo
-                </button>
-                <span className="text-sm text-[var(--sb-stone)]">
-                  Webcam + microphone required
-                </span>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                {
-                  title: "Visual Signal",
-                  desc: "Roboflow object detection for plastic, metal, glass, residue.",
-                  tone: "border-[var(--sb-sky)]/40",
-                },
-                {
-                  title: "Audio Signal",
-                  desc: "MFCC audio fingerprinting for material impact sounds.",
-                  tone: "border-[var(--sb-emerald)]/40",
-                },
-                {
-                  title: "Carbon Lens",
-                  desc: "Live footprint estimation for greenhouse mitigation.",
-                  tone: "border-[var(--sb-copper)]/40",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className={`sb-panel rounded-2xl border ${item.tone} p-5 text-sm text-[var(--sb-cloud)]`}
-                >
-                  <h3 className="font-display text-base">{item.title}</h3>
-                  <p className="mt-2 text-xs text-[var(--sb-stone)]">
-                    {item.desc}
-                  </p>
-                </div>
-              ))}
+        <section className="mt-16 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-[#6B7280]">
+              Intelligent waste detection
+            </p>
+            <h1 className="mt-3 text-4xl font-semibold leading-tight text-[#1F2937] sm:text-5xl">
+              SmartBin Demo Experience
+            </h1>
+            <p className="mt-4 max-w-xl text-base text-[#4B5563] sm:text-lg">
+              Launch the live monitoring view to preview how SmartBin detects
+              waste using visual and audio signals in real time.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/demo-smartbin/live")}
+                className="rounded-full bg-[#228B22] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1B6E1B]"
+              >
+                Start Demo
+              </button>
+              <span className="text-sm text-[#6B7280]">
+                Webcam + microphone required
+              </span>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="sb-panel rounded-[26px] p-6">
-              <h2 className="font-display text-lg text-[var(--sb-mint)]">
-                Demo Flow
-              </h2>
-              <ol className="mt-4 space-y-4 text-sm text-[var(--sb-stone)]">
-                {[
-                  "Enable camera and microphone.",
-                  "Drop waste into the bin.",
-                  "Verify prediction and submit correction.",
-                ].map((step, index) => (
-                  <li key={step} className="flex gap-3">
-                    <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs text-[var(--sb-mint)]">
-                      0{index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-[var(--sb-stone)]">
-                Tip: Keep lighting stable for the clearest visual detection.
-              </div>
-            </div>
-
-            <div className="sb-card rounded-[26px] p-6">
-              <h2 className="font-display text-lg text-[var(--sb-mint)]">
-                Real-time Metrics
-              </h2>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {[
-                  { label: "Latency", value: "1.6s", unit: "avg" },
-                  { label: "Confidence", value: "92%", unit: "median" },
-                  { label: "Audio Frames", value: "40", unit: "mfcc" },
-                  { label: "CO2 Saved", value: "3.2kg", unit: "demo" },
-                ].map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                  >
-                    <p className="text-xs uppercase tracking-[0.25em] text-[var(--sb-stone)]">
-                      {metric.label}
-                    </p>
-                    <p className="font-display mt-2 text-2xl text-[var(--sb-cloud)]">
-                      {metric.value}
-                      <span className="ml-2 text-xs font-normal text-[var(--sb-stone)]">
-                        {metric.unit}
-                      </span>
-                    </p>
-                  </div>
-                ))}
-              </div>
+          <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#1F2937]">
+              What you will see
+            </h2>
+            <ul className="mt-4 space-y-3 text-sm text-[#4B5563]">
+              <li className="flex gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-[#228B22]" />
+                Live camera feed with ambient audio monitoring.
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-[#87CEEB]" />
+                Real-time detection log for visual and audio signals.
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-[#228B22]" />
+                Results panel with validation and correction workflow.
+              </li>
+            </ul>
+            <div className="mt-6 rounded-2xl bg-[#F5F7F5] p-4 text-xs text-[#6B7280]">
+              Tip: Click “Start Demo” to begin a simulated detection cycle.
             </div>
           </div>
         </section>
@@ -136,4 +67,3 @@ export default function SmartbinDemoTest() {
     </div>
   );
 }
-
