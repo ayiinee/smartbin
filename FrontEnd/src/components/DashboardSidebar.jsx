@@ -4,7 +4,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", icon: "grid", to: "/dashboard" },
   { label: "Analytics & Reports", icon: "chart", disabled: true },
   { label: "AI Validation", icon: "brain", to: "/ai-validation" },
-  { label: "SmartBin Units", icon: "bin", disabled: true },
+  { label: "Education", icon: "education", disabled: true },
   { label: "Settings", icon: "gear", disabled: true },
 ];
 
@@ -29,9 +29,11 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12M9 9h6M9 15h6" />
     </svg>
   ),
-  bin: (
+  education: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V5h6v2m-8 0l1 13h8l1-13" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4-9 4-9-4 9-4z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v4c0 1.1 3.1 3 7 3s7-1.9 7-3v-4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v7" />
     </svg>
   ),
   gear: (

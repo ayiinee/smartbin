@@ -2,122 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { latLngBounds } from "leaflet";
 
+import { Link } from "react-router-dom";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
-
-const impactCards = [
-  { label: "Total Waste Collected", value: "1,250 kg", trend: "+5% vs. last week" },
-  { label: "Carbon Avoided (CO2e)", value: "850 kg", trend: "12% reduction", accent: "green" },
-  { label: "Active Bins", value: "24/25 Online", trend: "1 unit offline" },
-  { label: "Sorting Accuracy", value: "92%", trend: "Stable this week" },
-];
-
-const wasteLegend = [
-  { label: "Organic", value: "420 kg", color: "#228B22" },
-  { label: "Plastic", value: "310 kg", color: "#87CEEB" },
-  { label: "Paper", value: "220 kg", color: "#94A3B8" },
-  { label: "Metal", value: "180 kg", color: "#1F2937" },
-  { label: "Residue", value: "120 kg", color: "#8B3A3A" },
-];
-
-const liveFeed = [
-  { time: "10:45 AM", location: "1st Floor Canteen", type: "Plastic Bottles", confidence: "98%" },
-  { time: "10:42 AM", location: "Lobby", type: "Organic Waste", confidence: "93%" },
-  { time: "10:38 AM", location: "Conference Wing", type: "Paper Cups", confidence: "91%" },
-  { time: "10:34 AM", location: "Floor 3 Pantry", type: "Metal Cans", confidence: "96%" },
-];
-
-const alerts = [
-  { type: "Bin Full", location: "Level 2 - Hallway", status: "90% Full", tone: "full" },
-  { type: "Bin Offline", location: "Parking Garage", status: "Disconnected", tone: "offline" },
-  { type: "High Anomaly", location: "Cafeteria", status: "Mixed Waste", tone: "anomaly" },
-];
-
-const gisBins = [
-  {
-    id: "SB-UM-01",
-    name: "Smartbin UM-01",
-    institutionId: "inst-um",
-    institutionName: "Universitas Negeri Malang",
-    clusterId: "cluster-edu",
-    clusterName: "University District",
-    unitId: "unit-um-main",
-    unitName: "Main Campus",
-    status: "active",
-    lat: -7.961474,
-    lng: 112.617872,
-    updatedAt: "2026-01-31 10:42",
-  },
-  {
-    id: "SB-UB-01",
-    name: "Smartbin UB-01",
-    institutionId: "inst-ub",
-    institutionName: "Universitas Brawijaya",
-    clusterId: "cluster-edu",
-    clusterName: "University District",
-    unitId: "unit-ub-main",
-    unitName: "Main Campus",
-    status: "maintenance",
-    lat: -7.95235,
-    lng: 112.61296,
-    updatedAt: "2026-01-31 09:55",
-  },
-  {
-    id: "SB-MATOS-01",
-    name: "Smartbin MATOS-01",
-    institutionId: "inst-matos",
-    institutionName: "Malang Town Square",
-    clusterId: "cluster-retail",
-    clusterName: "Retail Hub",
-    unitId: "unit-matos-atrium",
-    unitName: "Main Atrium",
-    status: "full",
-    lat: -7.95682,
-    lng: 112.6188,
-    updatedAt: "2026-01-31 10:28",
-  },
-  {
-    id: "SB-MOG-01",
-    name: "Smartbin MOG-01",
-    institutionId: "inst-mog",
-    institutionName: "Mall Olympic Garden",
-    clusterId: "cluster-retail",
-    clusterName: "Retail Hub",
-    unitId: "unit-mog-entrance",
-    unitName: "Main Entrance",
-    status: "offline",
-    lat: -7.97696,
-    lng: 112.62388,
-    updatedAt: "2026-01-31 08:12",
-  },
-  {
-    id: "SB-LIB-01",
-    name: "Smartbin LIB-01",
-    institutionId: "inst-lib",
-    institutionName: "Perpustakaan Kota Malang",
-    clusterId: "cluster-civic",
-    clusterName: "Civic Center",
-    unitId: "unit-lib-main",
-    unitName: "Public Library",
-    status: "active",
-    lat: -7.9722203,
-    lng: 112.6220435,
-    updatedAt: "2026-01-31 10:10",
-  },
-];
-
-const statusOptions = [
-  { value: "active", label: "Active", color: "#228B22", chip: "bg-[#E7F6E7] text-[#228B22]" },
-  { value: "maintenance", label: "Maintenance", color: "#E0A800", chip: "bg-[#FFF5D6] text-[#8A6A00]" },
-  { value: "full", label: "Full", color: "#C2410C", chip: "bg-[#FDE8D8] text-[#9A3412]" },
-  { value: "offline", label: "Offline", color: "#6B7280", chip: "bg-[#F1F5F9] text-[#475569]" },
-];
-
-const alertToneStyles = {
-  full: "bg-[#F9EAEA] text-[#8B3A3A]",
-  offline: "bg-[#F1F5F9] text-[#475569]",
-  anomaly: "bg-[#EAF7FD] text-[#2B7A93]",
-};
+import { gisBins, statusOptions } from "../data/smartbins.js";
 
 function MapBounds({ bins }) {
   const map = useMap();
@@ -510,37 +398,52 @@ export default function Dashboard() {
 
             <section className="mt-6 rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[#1F2937]">Alerts / Action Needed</h2>
-                <span className="text-xs text-[#6B7280]">{dashboard?.alerts?.length || 0} active</span>
+                <h2 className="text-lg font-semibold text-[#1F2937]">Smartbin List</h2>
+                <span className="text-xs text-[#6B7280]">{gisBins.length} smartbins</span>
               </div>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-left text-sm text-[#4B5563]">
                   <thead className="text-xs uppercase tracking-[0.2em] text-[#6B7280]">
                     <tr>
-                      <th className="py-3 pr-4">Alert</th>
+                      <th className="py-3 pr-4">Smartbin</th>
                       <th className="py-3 pr-4">Location</th>
                       <th className="py-3 pr-4">Status</th>
-                      <th className="py-3">Time</th>
+                      <th className="py-3 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboard?.alerts?.map((alert, index) => (
+                    {gisBins.map((bin, index) => {
+                      const status = statusOptions.find((item) => item.value === bin.status);
+                      return (
                       <tr
-                        key={alert.type}
-                        className={index !== dashboard?.alerts?.length - 1 ? "border-b border-[#F1F5F9]" : ""}
+                        key={bin.id}
+                        className={index !== gisBins.length - 1 ? "border-b border-[#F1F5F9]" : ""}
                       >
-                        <td className="py-4 pr-4 font-semibold text-[#1F2937]">{alert.type}</td>
-                        <td className="py-4 pr-4">{alert.location}</td>
+                        <td className="py-4 pr-4 font-semibold text-[#1F2937]">{bin.name}</td>
+                        <td className="py-4 pr-4">
+                          <div className="font-medium text-[#1F2937]">{bin.institutionName}</div>
+                          <div className="text-xs text-[#6B7280]">
+                            {bin.clusterName} â€¢ {bin.unitName}
+                          </div>
+                        </td>
                         <td className="py-4 pr-4">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${alertToneStyles[alert.tone]}`}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${status?.chip ?? "bg-[#F1F5F9] text-[#475569]"}`}
                           >
-                            {alert.status}
+                            {status?.label ?? "Unknown"}
                           </span>
                         </td>
-                        <td className="py-4 text-[#6B7280]">{alert.time || "Just now"}</td>
+                        <td className="py-4 text-right">
+                          <Link
+                            to={`/smartbin/${bin.id}`}
+                            className="inline-flex items-center justify-center rounded-full border border-[#E2E8F0] px-3 py-1 text-xs font-semibold text-[#1F2937] transition hover:border-[#CBD5F5] hover:text-[#0F172A]"
+                          >
+                            View details
+                          </Link>
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
