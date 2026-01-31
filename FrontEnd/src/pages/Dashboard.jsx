@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { latLngBounds } from "leaflet";
-import { useEffect, useState } from "react";
 
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
@@ -260,7 +259,6 @@ export default function Dashboard() {
         <div className="flex min-h-screen flex-1 flex-col pl-20 lg:pl-64">
           <DashboardHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-28">
           <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-8">
             {isLoading ? (
               <div className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#475569]">
