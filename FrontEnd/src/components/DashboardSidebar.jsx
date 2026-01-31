@@ -94,7 +94,7 @@ export default function DashboardSidebar() {
         })}
 
         <Link
-          to="/demo-smartbin"
+          to="/demo-smartbin/live"
           className="flex w-full items-center justify-center rounded-2xl bg-[#1B9F52] px-3 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#178a43]"
         >
           <span className="text-current">{iconMap.play}</span>

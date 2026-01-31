@@ -141,7 +141,6 @@ export default function AIValidation() {
       }
     } catch (error) {
       console.error("Failed to load validation queue:", error);
-      setLoadError("Gagal memuat antrean validasi. Menampilkan data demo.");
       setItems(initialQueue);
     } finally {
       setIsLoading(false);

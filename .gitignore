@@ -9,3 +9,5 @@ BackEnd/venv/
 BackEnd/.venv/
 venv/
 env/
+.vite
+.zip
