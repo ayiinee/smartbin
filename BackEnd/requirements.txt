@@ -21,6 +21,7 @@ keras>=2.10
 
 ultralytics>=8.0
 inference-sdk
+supervision
 roboflow>=1.1
 
 google-generativeai>=0.5

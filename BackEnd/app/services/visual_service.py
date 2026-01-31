@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import cv2
 import numpy as np
+import supervision as sv
 from inference_sdk import InferenceHTTPClient
 
 
@@ -93,7 +94,8 @@ class VisualService:
             return self._infer_workflow(clean_b64)
         image = self._decode_base64_image(b64_string)
         detections = self._infer_model(image)
-        return {"detections": detections, "annotated_image": None}
+        annotated_image = self._annotate_image(image, detections)
+        return {"detections": detections, "annotated_image": annotated_image}
 
     def detect_from_file_bytes(self, image_bytes: bytes) -> Dict[str, Any]:
         if self.workflow_id:
@@ -101,7 +103,8 @@ class VisualService:
             return self._infer_workflow(b64_string)
         image = self._decode_image_bytes(image_bytes)
         detections = self._infer_model(image)
-        return {"detections": detections, "annotated_image": None}
+        annotated_image = self._annotate_image(image, detections)
+        return {"detections": detections, "annotated_image": annotated_image}
 
     def detect_from_path(self, image_path: str) -> Dict[str, Any]:
         if not os.path.exists(image_path):
@@ -110,8 +113,9 @@ class VisualService:
             with open(image_path, "rb") as handle:
                 b64_string = base64.b64encode(handle.read()).decode("ascii")
             return self._infer_workflow(b64_string)
-        detections = self._infer_model(image_path)
-        return {"detections": detections, "annotated_image": None}
+        with open(image_path, "rb") as handle:
+            image_bytes = handle.read()
+        return self.detect_from_file_bytes(image_bytes)
 
     @staticmethod
     def _strip_base64_header(b64_string: str) -> str:
@@ -195,6 +199,58 @@ class VisualService:
             "detections": detections,
             "annotated_image": annotated_image,
         }
+
+    def _annotate_image(
+        self, image_rgb: np.ndarray, detections: List[Dict[str, Any]]
+    ) -> Optional[str]:
+        if image_rgb is None or not detections:
+            return None
+
+        xyxy_list: List[List[float]] = []
+        confidences: List[float] = []
+        class_ids: List[int] = []
+        labels: List[str] = []
+
+        for idx, det in enumerate(detections):
+            bbox = det.get("bbox") or {}
+            cx = float(bbox.get("x", 0.0))
+            cy = float(bbox.get("y", 0.0))
+            width = float(bbox.get("width", 0.0))
+            height = float(bbox.get("height", 0.0))
+            x1 = max(0.0, cx - width / 2)
+            y1 = max(0.0, cy - height / 2)
+            x2 = max(0.0, cx + width / 2)
+            y2 = max(0.0, cy + height / 2)
+            xyxy_list.append([x1, y1, x2, y2])
+            confidences.append(float(det.get("confidence", 0.0)))
+            class_ids.append(idx)
+            label = det.get("label") or "unknown"
+            labels.append(f"{label} {confidences[-1]:.2f}")
+
+        if not xyxy_list:
+            return None
+
+        detections_sv = sv.Detections(
+            xyxy=np.array(xyxy_list, dtype=np.float32),
+            confidence=np.array(confidences, dtype=np.float32),
+            class_id=np.array(class_ids, dtype=np.int32),
+        )
+
+        image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+        box_annotator = sv.BoxAnnotator()
+        label_annotator = sv.LabelAnnotator()
+        annotated = box_annotator.annotate(scene=image_bgr.copy(), detections=detections_sv)
+        annotated = label_annotator.annotate(
+            scene=annotated,
+            detections=detections_sv,
+            labels=labels,
+        )
+        annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+
+        success, buffer = cv2.imencode(".jpg", annotated_rgb, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+        if not success:
+            return None
+        return base64.b64encode(buffer).decode("ascii")
 
     @staticmethod
     def _extract_base64_image(obj: Any) -> Optional[str]:
