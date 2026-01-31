@@ -40,6 +40,17 @@ _camera_lock = threading.Lock()
 _camera = None
 _camera_index = None
 
+_stream_lock = threading.Lock()
+_stream_thread_started = False
+_latest_frame = None
+_latest_frame_ts = 0.0
+_latest_pred = None
+_latest_pred_ts = 0.0
+
+STREAM_MAX_WIDTH = 640
+STREAM_TARGET_FPS = 15
+PREDICT_INTERVAL_MS = 300
+
 
 def _backend_id() -> int:
     if CAMERA_BACKEND == "DSHOW":
@@ -116,6 +127,18 @@ def _read_camera_frame() -> Optional[np.ndarray]:
         if not ok:
             return None
     return frame
+
+
+def _resize_frame(frame: np.ndarray, max_width: int) -> np.ndarray:
+    if max_width <= 0:
+        return frame
+    h, w = frame.shape[:2]
+    if w <= max_width:
+        return frame
+    scale = max_width / float(w)
+    new_w = max_width
+    new_h = int(h * scale)
+    return cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
 
 def _encode_jpeg(frame: np.ndarray) -> Optional[bytes]:
@@ -201,10 +224,51 @@ def _draw_predictions(frame: np.ndarray, visual_result: dict) -> None:
         )
 
 
+def _ensure_stream_thread() -> None:
+    global _stream_thread_started
+    if _stream_thread_started:
+        return
+    with _stream_lock:
+        if _stream_thread_started:
+            return
+
+        def _camera_loop() -> None:
+            global _latest_frame, _latest_frame_ts, _latest_pred, _latest_pred_ts
+            visual_service = get_visual_service()
+            predict_interval = max(0.05, PREDICT_INTERVAL_MS / 1000.0)
+            while True:
+                frame = _read_camera_frame()
+                if frame is None:
+                    time.sleep(0.05)
+                    continue
+                frame = _resize_frame(frame, STREAM_MAX_WIDTH)
+                now = time.perf_counter()
+                if now - _latest_pred_ts >= predict_interval:
+                    try:
+                        _latest_pred = visual_service.predict(frame)
+                        _latest_pred_ts = now
+                    except Exception:
+                        _latest_pred = {
+                            "predictions": [],
+                            "top_class": None,
+                            "top_confidence": 0.0,
+                            "class_probabilities": {},
+                        }
+                        _latest_pred_ts = now
+                with _stream_lock:
+                    _latest_frame = frame
+                    _latest_frame_ts = now
+
+        thread = threading.Thread(target=_camera_loop, daemon=True)
+        thread.start()
+        _stream_thread_started = True
+
+
 @app.on_event("startup")
 def startup() -> None:
     init_db()
     get_audio_service()
+    get_visual_service()
 
 
 @app.get("/")
@@ -423,13 +487,17 @@ def visual_stream() -> StreamingResponse:
     """
 
     def generator():
+        _ensure_stream_thread()
+        target_delay = 1.0 / max(1, STREAM_TARGET_FPS)
         while True:
-            frame = _read_camera_frame()
+            with _stream_lock:
+                frame = None if _latest_frame is None else _latest_frame.copy()
+                visual_result = _latest_pred or {"predictions": []}
             if frame is None:
-                break
-            visual_service = get_visual_service()
-            visual_result = visual_service.predict(frame)
-            _draw_predictions(frame, visual_result)
+                time.sleep(0.05)
+                continue
+            if visual_result:
+                _draw_predictions(frame, visual_result)
 
             jpeg = _encode_jpeg(frame)
             if jpeg is None:
@@ -440,6 +508,7 @@ def visual_stream() -> StreamingResponse:
                 + jpeg
                 + b"\r\n"
             )
+            time.sleep(target_delay)
 
     return StreamingResponse(
         generator(),

@@ -188,6 +188,7 @@
         }
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        await audioContext.resume();
         const source = audioContext.createMediaStreamSource(mediaStream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 2048;
@@ -204,6 +205,13 @@
         rmsValue.textContent = rms.toFixed(3);
         const pct = Math.min(100, Math.max(0, (rms / 0.9) * 100));
         rmsBar.style.width = `${pct}%`;
+
+        const threshold = Number(thresholdEl.value);
+        const now = performance.now();
+        if (!isDetecting && rms >= threshold && now - lastTrigger > DEBOUNCE_MS) {
+          lastTrigger = now;
+          runDetection();
+        }
 
         rafId = requestAnimationFrame(loop);
       }
@@ -247,7 +255,7 @@
 
         try {
           const formData = new FormData();
-          formData.append("file", audioBlob, "audio.webm");
+          formData.happend("file", audioBlob, "audio.webm");
 
           const res = await fetch(`${apiBase()}/predict-audio`, {
             method: "POST",
@@ -274,6 +282,7 @@
           isListening = true;
           loop();
         }
+        setStatus("MONITORING", "ok");
         if (!isDetecting) {
           runDetection();
         }
@@ -287,7 +296,7 @@
         }
         if (mediaStream) {
           mediaStream.getTracks().forEach((track) => track.stop());
-          mediaStream = null;
+          mediaShbbbtream = null;
         }
         if (audioContext) {
           audioContext.close();

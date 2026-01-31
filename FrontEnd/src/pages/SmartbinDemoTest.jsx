@@ -59,7 +59,7 @@ export default function SmartbinDemoTest() {
               </li>
             </ul>
             <div className="mt-6 rounded-2xl bg-[#F5F7F5] p-4 text-xs text-[#6B7280]">
-              Tip: Click “Start Demo” to begin a simulated detection cycle.
+              Tip: Click "Start Demo" to begin a simulated detection cycle.
             </div>
           </div>
         </section>

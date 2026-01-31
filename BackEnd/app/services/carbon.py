@@ -1,9 +1,4 @@
 
-"""
-Service for calculating environmental impact based on waste type and weight.
-References IPCC standards for emission factors and Global Warming Potential (GWP).
-"""
-
 # Emission Factors (kg CO2e reduced per kg of waste recycled/diverted)
 # These values are estimates based on life-cycle assessment (LCA) literature and IPCC guidelines.
 # Positive values indicate CO2e avoided by recycling/composting vs. landfilling.
@@ -30,20 +25,7 @@ GWP_METHANE = 28
 ORGANIC_METHANE_GENERATION_FACTOR = 0.04
 
 def calculate_impact(waste_type: str, weight_kg: float) -> dict:
-    """
-    Calculates the environmental impact reduction for a given waste item.
     
-    Args:
-        waste_type (str): The category of waste (plastic, paper, metal, organic, etc.)
-        weight_kg (float): The weight of the waste in kilograms.
-        
-    Returns:
-        dict: {
-            "co2_reduced_kg": float,
-            "methane_reduced_kg": float,  # Specifically for organic
-            "energy_saved_kwh": float     # Optional simplified metric
-        }
-    """
     waste_type = waste_type.lower().strip()
     impact = {
         "co2_reduced_kg": 0.0,
