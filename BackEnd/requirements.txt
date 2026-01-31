@@ -1,0 +1,11 @@
+flask
+flask-cors
+ultralytics
+numpy
+librosa
+scikit-learn
+joblib
+inference-sdk
+flask-sqlalchemy 
+flask-migrate  
+google-generativeai
