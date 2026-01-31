@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { latLngBounds } from "leaflet";
+import { useEffect, useState } from "react";
+
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
 
@@ -32,13 +34,223 @@ const alerts = [
   { type: "High Anomaly", location: "Cafeteria", status: "Mixed Waste", tone: "anomaly" },
 ];
 
+const gisBins = [
+  {
+    id: "SB-UM-01",
+    name: "Smartbin UM-01",
+    institutionId: "inst-um",
+    institutionName: "Universitas Negeri Malang",
+    clusterId: "cluster-edu",
+    clusterName: "University District",
+    unitId: "unit-um-main",
+    unitName: "Main Campus",
+    status: "active",
+    lat: -7.961474,
+    lng: 112.617872,
+    updatedAt: "2026-01-31 10:42",
+  },
+  {
+    id: "SB-UB-01",
+    name: "Smartbin UB-01",
+    institutionId: "inst-ub",
+    institutionName: "Universitas Brawijaya",
+    clusterId: "cluster-edu",
+    clusterName: "University District",
+    unitId: "unit-ub-main",
+    unitName: "Main Campus",
+    status: "maintenance",
+    lat: -7.95235,
+    lng: 112.61296,
+    updatedAt: "2026-01-31 09:55",
+  },
+  {
+    id: "SB-MATOS-01",
+    name: "Smartbin MATOS-01",
+    institutionId: "inst-matos",
+    institutionName: "Malang Town Square",
+    clusterId: "cluster-retail",
+    clusterName: "Retail Hub",
+    unitId: "unit-matos-atrium",
+    unitName: "Main Atrium",
+    status: "full",
+    lat: -7.95682,
+    lng: 112.6188,
+    updatedAt: "2026-01-31 10:28",
+  },
+  {
+    id: "SB-MOG-01",
+    name: "Smartbin MOG-01",
+    institutionId: "inst-mog",
+    institutionName: "Mall Olympic Garden",
+    clusterId: "cluster-retail",
+    clusterName: "Retail Hub",
+    unitId: "unit-mog-entrance",
+    unitName: "Main Entrance",
+    status: "offline",
+    lat: -7.97696,
+    lng: 112.62388,
+    updatedAt: "2026-01-31 08:12",
+  },
+  {
+    id: "SB-LIB-01",
+    name: "Smartbin LIB-01",
+    institutionId: "inst-lib",
+    institutionName: "Perpustakaan Kota Malang",
+    clusterId: "cluster-civic",
+    clusterName: "Civic Center",
+    unitId: "unit-lib-main",
+    unitName: "Public Library",
+    status: "active",
+    lat: -7.9722203,
+    lng: 112.6220435,
+    updatedAt: "2026-01-31 10:10",
+  },
+];
+
+const statusOptions = [
+  { value: "active", label: "Active", color: "#228B22", chip: "bg-[#E7F6E7] text-[#228B22]" },
+  { value: "maintenance", label: "Maintenance", color: "#E0A800", chip: "bg-[#FFF5D6] text-[#8A6A00]" },
+  { value: "full", label: "Full", color: "#C2410C", chip: "bg-[#FDE8D8] text-[#9A3412]" },
+  { value: "offline", label: "Offline", color: "#6B7280", chip: "bg-[#F1F5F9] text-[#475569]" },
+];
+
 const alertToneStyles = {
   full: "bg-[#F9EAEA] text-[#8B3A3A]",
   offline: "bg-[#F1F5F9] text-[#475569]",
   anomaly: "bg-[#EAF7FD] text-[#2B7A93]",
 };
 
+function MapBounds({ bins }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!bins.length) return;
+    const bounds = latLngBounds(bins.map((bin) => [bin.lat, bin.lng]));
+    map.fitBounds(bounds, { padding: [80, 80] });
+  }, [bins, map]);
+
+  return null;
+}
+
+function MapSizeFix() {
+  const map = useMap();
+
+  useEffect(() => {
+    const refresh = () => map.invalidateSize(true);
+    const timer = setTimeout(refresh, 0);
+    window.addEventListener("resize", refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", refresh);
+    };
+  }, [map]);
+
+  return null;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 export default function Dashboard() {
+  const [selectedInstitution, setSelectedInstitution] = useState("all");
+  const [selectedCluster, setSelectedCluster] = useState("all");
+  const [selectedUnit, setSelectedUnit] = useState("all");
+  const [statusFilters, setStatusFilters] = useState(statusOptions.map((status) => status.value));
+
+  const institutions = useMemo(() => {
+    const map = new Map();
+    gisBins.forEach((bin) => {
+      if (!map.has(bin.institutionId)) {
+        map.set(bin.institutionId, { id: bin.institutionId, name: bin.institutionName });
+      }
+    });
+    return Array.from(map.values());
+  }, []);
+
+  const clusters = useMemo(() => {
+    const source = selectedInstitution === "all" ? gisBins : gisBins.filter((bin) => bin.institutionId === selectedInstitution);
+    const map = new Map();
+    source.forEach((bin) => {
+      if (!map.has(bin.clusterId)) {
+        map.set(bin.clusterId, { id: bin.clusterId, name: bin.clusterName });
+      }
+    });
+    return Array.from(map.values());
+  }, [selectedInstitution]);
+
+  const units = useMemo(() => {
+    let source = gisBins;
+    if (selectedInstitution !== "all") {
+      source = source.filter((bin) => bin.institutionId === selectedInstitution);
+    }
+    if (selectedCluster !== "all") {
+      source = source.filter((bin) => bin.clusterId === selectedCluster);
+    }
+    const map = new Map();
+    source.forEach((bin) => {
+      if (!map.has(bin.unitId)) {
+        map.set(bin.unitId, { id: bin.unitId, name: bin.unitName });
+      }
+    });
+    return Array.from(map.values());
+  }, [selectedInstitution, selectedCluster]);
+
+  const filteredBins = useMemo(() => {
+    const activeStatuses = statusFilters.length ? statusFilters : statusOptions.map((status) => status.value);
+    return gisBins.filter((bin) => {
+      if (selectedInstitution !== "all" && bin.institutionId !== selectedInstitution) return false;
+      if (selectedCluster !== "all" && bin.clusterId !== selectedCluster) return false;
+      if (selectedUnit !== "all" && bin.unitId !== selectedUnit) return false;
+      if (!activeStatuses.includes(bin.status)) return false;
+      return true;
+    });
+  }, [selectedInstitution, selectedCluster, selectedUnit, statusFilters]);
+
+  const handleResetFilters = () => {
+    setSelectedInstitution("all");
+    setSelectedCluster("all");
+    setSelectedUnit("all");
+    setStatusFilters(statusOptions.map((status) => status.value));
+  };
+
+  const toggleStatus = (value) => {
+    setStatusFilters((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  };
+
+  const [dashboard, setDashboard] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/`);
+        if (!response.ok) {
+          throw new Error(`Dashboard request failed: ${response.status}`);
+        }
+        const payload = await response.json();
+        if (isMounted) {
+          setDashboard(payload);
+          setLoadError("");
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError("Gagal memuat data dari backend.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-[#F5F7F5] text-[#333333]">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(34,139,34,0.12),_rgba(245,247,245,0.95)_45%)]" />
@@ -48,7 +260,18 @@ export default function Dashboard() {
         <div className="flex min-h-screen flex-1 flex-col pl-20 lg:pl-64">
           <DashboardHeader />
 
+          <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-28">
           <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-8">
+            {isLoading ? (
+              <div className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#475569]">
+                Memuat data dashboard...
+              </div>
+            ) : null}
+            {loadError ? (
+              <div className="mb-4 rounded-2xl border border-[#F1C0C0] bg-[#FDF2F2] px-4 py-3 text-sm text-[#8B3A3A]">
+                {loadError}
+              </div>
+            ) : null}
             <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               {dashboard?.impact_cards?.map((card) => (
                 <div key={card.label} className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
