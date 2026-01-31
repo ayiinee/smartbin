@@ -1,6 +1,8 @@
+import { NavLink, useLocation } from "react-router-dom";
+
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", active: true },
-  { label: "Analytics & Reports", icon: "chart" },
+  { label: "Dashboard", icon: "grid", path: "/dashboard" },
+  { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
   { label: "AI Validation", icon: "brain" },
   { label: "SmartBin Units", icon: "bin" },
   { label: "Settings", icon: "gear" },
@@ -45,6 +47,8 @@ const iconMap = {
 };
 
 export default function DashboardSidebar() {
+  const location = useLocation();
+
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/90 px-4 py-6 shadow-sm backdrop-blur lg:w-64">
       <div className="flex items-center gap-3 px-2">
@@ -53,17 +57,27 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.active;
+          const isActive =
+            item.path &&
+            (location.pathname === item.path ||
+              (item.path === "/dashboard" && location.pathname === "/"));
+          const baseClass = `group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+            isActive
+              ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
+              : "text-[#475569] hover:bg-[#F1F5F9]"
+          }`;
+
+          if (item.path) {
+            return (
+              <NavLink key={item.label} to={item.path} className={baseClass} aria-current={isActive ? "page" : undefined}>
+                <span className="text-current">{iconMap[item.icon]}</span>
+                <span className="hidden lg:inline">{item.label}</span>
+              </NavLink>
+            );
+          }
+
           return (
-            <button
-              key={item.label}
-              type="button"
-              className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-                isActive
-                  ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
-                  : "text-[#475569] hover:bg-[#F1F5F9]"
-              }`}
-            >
+            <button key={item.label} type="button" className={baseClass}>
               <span className="text-current">{iconMap[item.icon]}</span>
               <span className="hidden lg:inline">{item.label}</span>
             </button>

@@ -1,16 +1,20 @@
-export default function DashboardHeader() {
+export default function DashboardHeader({
+  title = "Dashboard",
+  breadcrumb = "Home / Dashboard",
+  searchPlaceholder = "Search Bin ID or Location",
+}) {
   return (
     <header className="fixed left-20 right-0 top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] bg-[#F5F7F5]/90 px-6 py-4 shadow-sm backdrop-blur lg:left-64">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#6B7280]">Home / Dashboard</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[#1F2937]">Dashboard</h1>
+        <p className="text-xs uppercase tracking-[0.2em] text-[#6B7280]">{breadcrumb}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-[#1F2937]">{title}</h1>
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3">
         <div className="relative w-full max-w-md">
           <input
             type="search"
-            placeholder="Search Bin ID or Location"
+            placeholder={searchPlaceholder}
             className="w-full rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-sm text-[#1F2937] shadow-sm focus:border-[#87CEEB] focus:outline-none"
           />
           <svg

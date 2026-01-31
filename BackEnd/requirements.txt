@@ -22,3 +22,4 @@ google-generativeai
 python-dotenv 
 sqlalchemy 
 psycopg2
+reportlab>=4.0
