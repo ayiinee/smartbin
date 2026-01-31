@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", path: "/dashboard", exact: true },
+  { label: "Dashboard", icon: "grid", path: "/dashboard" },
   { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
   { label: "AI Validation", icon: "brain", path: "/ai-validation" },
-  { label: "SmartBin Demo", icon: "play", path: "/demo-smartbin" },
-  { label: "SmartBin Units", icon: "bin", path: "/dashboard", hash: "#smartbin-units" },
-  { label: "Settings", icon: "gear", disabled: true },
+  { label: "SmartBin Units", icon: "bin", path: "/smartbin/1" },
+  { label: "Education", icon: "education", path: "/education" },
+  { label: "Settings", icon: "gear", path: "/settings" },
 ];
 
 const iconMap = {
@@ -76,38 +76,20 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = isItemActive(item);
-          const className = `group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-            isActive
-              ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
-              : "text-[#475569] hover:bg-[#F1F5F9]"
-          } ${item.disabled ? "cursor-not-allowed opacity-60 hover:bg-transparent" : ""}`;
-
-          const content = (
-            <>
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.label}
+              to={item.path}
+              className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+                isActive
+                  ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
+                  : "text-[#475569] hover:bg-[#F1F5F9]"
+              }`}
+            >
               <span className="text-current">{iconMap[item.icon]}</span>
               <span className="hidden lg:inline">{item.label}</span>
-            </>
-          );
-
-          if (item.path && !item.disabled) {
-            const to = item.hash ? `${item.path}${item.hash}` : item.path;
-            return (
-              <Link key={item.label} to={to} className={className}>
-                {content}
-              </Link>
-            );
-          }
-
-          return (
-            <button
-              key={item.label}
-              type="button"
-              className={className}
-              aria-disabled={item.disabled ? "true" : "false"}
-            >
-              {content}
-            </button>
+            </Link>
           );
         })}
       </nav>
