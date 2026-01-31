@@ -1,4 +1,14 @@
-tensorflow>=2.10
+flask
+flask-cors
+ultralytics
+numpy
+librosa
+scikit-learn
+joblib
+inference-sdk
+flask-sqlalchemy 
+flask-migrate  
+google-generativeaitensorflow>=2.10
 librosa>=0.10
 numpy>=1.23
 scikit-learn>=1.2
