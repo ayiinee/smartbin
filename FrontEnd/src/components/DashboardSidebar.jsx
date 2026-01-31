@@ -1,9 +1,12 @@
+import { Link, useLocation } from "react-router-dom";
+
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", active: true },
-  { label: "Analytics & Reports", icon: "chart" },
-  { label: "AI Validation", icon: "brain" },
-  { label: "SmartBin Units", icon: "bin" },
-  { label: "Settings", icon: "gear" },
+  { label: "Dashboard", icon: "grid", path: "/dashboard" },
+  { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
+  { label: "AI Validation", icon: "brain", path: "/ai-validation" },
+  { label: "SmartBin Units", icon: "bin", path: "/smartbin/1" },
+  { label: "Education", icon: "education", path: "/education" },
+  { label: "Settings", icon: "gear", path: "/settings" },
 ];
 
 const iconMap = {
@@ -57,11 +60,11 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.active;
+          const isActive = location.pathname === item.path;
           return (
-            <button
+            <Link
               key={item.label}
-              type="button"
+              to={item.path}
               className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
                 isActive
                   ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
@@ -70,7 +73,7 @@ export default function DashboardSidebar() {
             >
               <span className="text-current">{iconMap[item.icon]}</span>
               <span className="hidden lg:inline">{item.label}</span>
-            </button>
+            </Link>
           );
         })}
       </nav>
