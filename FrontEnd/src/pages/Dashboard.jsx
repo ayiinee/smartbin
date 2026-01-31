@@ -1,3 +1,6 @@
+﻿import { useEffect, useMemo, useState } from "react";
+import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { latLngBounds } from "leaflet";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
 
@@ -29,23 +32,196 @@ const alerts = [
   { type: "High Anomaly", location: "Cafeteria", status: "Mixed Waste", tone: "anomaly" },
 ];
 
+const gisBins = [
+  {
+    id: "SB-UM-01",
+    name: "Smartbin UM-01",
+    institutionId: "inst-um",
+    institutionName: "Universitas Negeri Malang",
+    clusterId: "cluster-edu",
+    clusterName: "University District",
+    unitId: "unit-um-main",
+    unitName: "Main Campus",
+    status: "active",
+    lat: -7.961474,
+    lng: 112.617872,
+    updatedAt: "2026-01-31 10:42",
+  },
+  {
+    id: "SB-UB-01",
+    name: "Smartbin UB-01",
+    institutionId: "inst-ub",
+    institutionName: "Universitas Brawijaya",
+    clusterId: "cluster-edu",
+    clusterName: "University District",
+    unitId: "unit-ub-main",
+    unitName: "Main Campus",
+    status: "maintenance",
+    lat: -7.95235,
+    lng: 112.61296,
+    updatedAt: "2026-01-31 09:55",
+  },
+  {
+    id: "SB-MATOS-01",
+    name: "Smartbin MATOS-01",
+    institutionId: "inst-matos",
+    institutionName: "Malang Town Square",
+    clusterId: "cluster-retail",
+    clusterName: "Retail Hub",
+    unitId: "unit-matos-atrium",
+    unitName: "Main Atrium",
+    status: "full",
+    lat: -7.95682,
+    lng: 112.6188,
+    updatedAt: "2026-01-31 10:28",
+  },
+  {
+    id: "SB-MOG-01",
+    name: "Smartbin MOG-01",
+    institutionId: "inst-mog",
+    institutionName: "Mall Olympic Garden",
+    clusterId: "cluster-retail",
+    clusterName: "Retail Hub",
+    unitId: "unit-mog-entrance",
+    unitName: "Main Entrance",
+    status: "offline",
+    lat: -7.97696,
+    lng: 112.62388,
+    updatedAt: "2026-01-31 08:12",
+  },
+  {
+    id: "SB-LIB-01",
+    name: "Smartbin LIB-01",
+    institutionId: "inst-lib",
+    institutionName: "Perpustakaan Kota Malang",
+    clusterId: "cluster-civic",
+    clusterName: "Civic Center",
+    unitId: "unit-lib-main",
+    unitName: "Public Library",
+    status: "active",
+    lat: -7.9722203,
+    lng: 112.6220435,
+    updatedAt: "2026-01-31 10:10",
+  },
+];
+
+const statusOptions = [
+  { value: "active", label: "Active", color: "#228B22", chip: "bg-[#E7F6E7] text-[#228B22]" },
+  { value: "maintenance", label: "Maintenance", color: "#E0A800", chip: "bg-[#FFF5D6] text-[#8A6A00]" },
+  { value: "full", label: "Full", color: "#C2410C", chip: "bg-[#FDE8D8] text-[#9A3412]" },
+  { value: "offline", label: "Offline", color: "#6B7280", chip: "bg-[#F1F5F9] text-[#475569]" },
+];
+
 const alertToneStyles = {
   full: "bg-[#F9EAEA] text-[#8B3A3A]",
   offline: "bg-[#F1F5F9] text-[#475569]",
   anomaly: "bg-[#EAF7FD] text-[#2B7A93]",
 };
 
+function MapBounds({ bins }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!bins.length) return;
+    const bounds = latLngBounds(bins.map((bin) => [bin.lat, bin.lng]));
+    map.fitBounds(bounds, { padding: [80, 80] });
+  }, [bins, map]);
+
+  return null;
+}
+
+function MapSizeFix() {
+  const map = useMap();
+
+  useEffect(() => {
+    const refresh = () => map.invalidateSize(true);
+    const timer = setTimeout(refresh, 0);
+    window.addEventListener("resize", refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", refresh);
+    };
+  }, [map]);
+
+  return null;
+}
+
 export default function Dashboard() {
+  const [selectedInstitution, setSelectedInstitution] = useState("all");
+  const [selectedCluster, setSelectedCluster] = useState("all");
+  const [selectedUnit, setSelectedUnit] = useState("all");
+  const [statusFilters, setStatusFilters] = useState(statusOptions.map((status) => status.value));
+
+  const institutions = useMemo(() => {
+    const map = new Map();
+    gisBins.forEach((bin) => {
+      if (!map.has(bin.institutionId)) {
+        map.set(bin.institutionId, { id: bin.institutionId, name: bin.institutionName });
+      }
+    });
+    return Array.from(map.values());
+  }, []);
+
+  const clusters = useMemo(() => {
+    const source = selectedInstitution === "all" ? gisBins : gisBins.filter((bin) => bin.institutionId === selectedInstitution);
+    const map = new Map();
+    source.forEach((bin) => {
+      if (!map.has(bin.clusterId)) {
+        map.set(bin.clusterId, { id: bin.clusterId, name: bin.clusterName });
+      }
+    });
+    return Array.from(map.values());
+  }, [selectedInstitution]);
+
+  const units = useMemo(() => {
+    let source = gisBins;
+    if (selectedInstitution !== "all") {
+      source = source.filter((bin) => bin.institutionId === selectedInstitution);
+    }
+    if (selectedCluster !== "all") {
+      source = source.filter((bin) => bin.clusterId === selectedCluster);
+    }
+    const map = new Map();
+    source.forEach((bin) => {
+      if (!map.has(bin.unitId)) {
+        map.set(bin.unitId, { id: bin.unitId, name: bin.unitName });
+      }
+    });
+    return Array.from(map.values());
+  }, [selectedInstitution, selectedCluster]);
+
+  const filteredBins = useMemo(() => {
+    const activeStatuses = statusFilters.length ? statusFilters : statusOptions.map((status) => status.value);
+    return gisBins.filter((bin) => {
+      if (selectedInstitution !== "all" && bin.institutionId !== selectedInstitution) return false;
+      if (selectedCluster !== "all" && bin.clusterId !== selectedCluster) return false;
+      if (selectedUnit !== "all" && bin.unitId !== selectedUnit) return false;
+      if (!activeStatuses.includes(bin.status)) return false;
+      return true;
+    });
+  }, [selectedInstitution, selectedCluster, selectedUnit, statusFilters]);
+
+  const handleResetFilters = () => {
+    setSelectedInstitution("all");
+    setSelectedCluster("all");
+    setSelectedUnit("all");
+    setStatusFilters(statusOptions.map((status) => status.value));
+  };
+
+  const toggleStatus = (value) => {
+    setStatusFilters((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  };
+
   return (
     <div className="relative min-h-screen bg-[#F5F7F5] text-[#333333]">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(34,139,34,0.12),_rgba(245,247,245,0.95)_45%)]" />
-      <div className="flex min-h-screen">
+      <div className="min-h-screen">
         <DashboardSidebar />
 
-        <div className="flex min-h-screen flex-1 flex-col">
+        <div className="flex min-h-screen flex-1 flex-col pl-20 lg:pl-64">
           <DashboardHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-8">
+          <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-28">
             <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               {impactCards.map((card) => (
                 <div key={card.label} className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
@@ -62,6 +238,178 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
+            </section>
+
+            <section className="relative mt-10 overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm">
+              <div className="relative isolate h-[70vh] min-h-[520px] w-full overflow-hidden bg-[#E9F0EA]">
+                <MapContainer
+                  center={[-7.9771, 112.634]}
+                  zoom={12}
+                  scrollWheelZoom
+                  className="relative z-0 h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <MapSizeFix />
+                  <MapBounds bins={filteredBins} />
+                  {filteredBins.map((bin) => {
+                    const status = statusOptions.find((item) => item.value === bin.status);
+                    return (
+                      <CircleMarker
+                        key={bin.id}
+                        center={[bin.lat, bin.lng]}
+                        radius={10}
+                        pathOptions={{ color: status?.color ?? "#228B22", fillColor: status?.color ?? "#228B22", fillOpacity: 0.85 }}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <div className="text-base font-semibold text-[#1F2937]">{bin.name}</div>
+                            <div className="mt-1 text-[#4B5563]">{bin.institutionName}</div>
+                            <div className="text-[#6B7280]">
+                              {bin.clusterName} • {bin.unitName}
+                            </div>
+                            <div className="mt-2 text-xs uppercase tracking-[0.2em] text-[#6B7280]">Status</div>
+                            <div className="font-semibold text-[#1F2937]">{status?.label}</div>
+                            <div className="mt-2 text-xs text-[#6B7280]">Updated {bin.updatedAt}</div>
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+                    );
+                  })}
+                </MapContainer>
+
+                <div className="pointer-events-none absolute left-6 top-6 rounded-2xl bg-white/80 px-4 py-3 text-sm shadow-lg backdrop-blur">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1F2937]">
+                    Gis Map SmartBin Distribution
+                  </div>
+                  <div className="mt-2 text-[#6B7280]">{filteredBins.length} bins match the filters</div>
+                </div>
+
+                <div className="pointer-events-none absolute left-6 bottom-6 rounded-2xl bg-white/85 px-4 py-3 text-xs text-[#475569] shadow-md backdrop-blur">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">Status Legend</div>
+                  <div className="mt-2 space-y-2">
+                    {statusOptions.map((status) => (
+                      <div key={status.value} className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: status.color }} />
+                        <span className="font-medium text-[#1F2937]">{status.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="absolute right-4 top-4 z-20 w-64 max-w-[80vw] rounded-2xl border border-white/80 bg-white/90 p-4 shadow-lg backdrop-blur md:right-6 md:top-6 md:w-72">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">Filter Layer</div>
+                      <div className="mt-1 text-base font-semibold text-[#1F2937]">Map Filters</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="rounded-full border border-[#E2E8F0] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#475569] transition hover:border-[#CBD5F5] hover:text-[#1F2937] cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
+                      Institution
+                      <select
+                        value={selectedInstitution}
+                        onChange={(event) => {
+                          setSelectedInstitution(event.target.value);
+                          setSelectedCluster("all");
+                          setSelectedUnit("all");
+                        }}
+                        className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
+                      >
+                        <option value="all">All Institutions</option>
+                        {institutions.map((inst) => (
+                          <option key={inst.id} value={inst.id}>
+                            {inst.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
+                      Cluster
+                      <select
+                        value={selectedCluster}
+                        onChange={(event) => {
+                          setSelectedCluster(event.target.value);
+                          setSelectedUnit("all");
+                        }}
+                        className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
+                      >
+                        <option value="all">All Clusters</option>
+                        {clusters.map((cluster) => (
+                          <option key={cluster.id} value={cluster.id}>
+                            {cluster.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
+                      Smartbin Unit
+                      <select
+                        value={selectedUnit}
+                        onChange={(event) => setSelectedUnit(event.target.value)}
+                        className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
+                      >
+                        <option value="all">All Units</option>
+                        {units.map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">Status</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {statusOptions.map((status) => {
+                        const isActive = statusFilters.includes(status.value);
+                        return (
+                          <button
+                            key={status.value}
+                            type="button"
+                            onClick={() => toggleStatus(status.value)}
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                              isActive ? status.chip : "border border-[#E2E8F0] bg-white text-[#6B7280] hover:text-[#1F2937]"
+                            }`}
+                          >
+                            {status.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-[11px] text-[#6B7280]">
+                      Toggle status filters to focus on priority bins.
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-[#F8FAFC] px-3 py-2 text-[11px] text-[#475569]">
+                    Showing <span className="font-semibold text-[#1F2937]">{filteredBins.length}</span> bins from{" "}
+                    <span className="font-semibold text-[#1F2937]">{gisBins.length}</span> total devices.
+                  </div>
+                </div>
+
+                {filteredBins.length === 0 && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="rounded-3xl bg-white/90 px-6 py-4 text-center text-sm text-[#475569] shadow-lg backdrop-blur">
+                      <div className="text-base font-semibold text-[#1F2937]">No bins match these filters</div>
+                      <div className="mt-1">Try expanding the institution or status selection.</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
 
             <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -152,3 +500,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
