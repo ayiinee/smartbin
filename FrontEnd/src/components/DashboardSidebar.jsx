@@ -1,10 +1,10 @@
-import { NavLink } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: "grid", to: "/dashboard" },
   { label: "Analytics & Reports", icon: "chart", disabled: true },
   { label: "AI Validation", icon: "brain", to: "/ai-validation" },
-  { label: "Education", icon: "education", disabled: true },
+  { label: "Education", icon: "education", to: "/education" },
   { label: "Settings", icon: "gear", disabled: true },
 ];
 

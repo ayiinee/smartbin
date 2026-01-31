@@ -5,6 +5,7 @@ import SmartbinDetails from "./pages/SmartbinDetails.jsx";
 import SmartbinDemo from "./pages/SmartbinDemo.jsx";
 import SmartbinDemoTest from "./pages/SmartbinDemoTest.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import Education from "./pages/Education.jsx";
 import Login from "./auth/Login.jsx";
 import "./App.css";
 
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/smartbin/:id" element={<SmartbinDetails />} />
         <Route path="/demo-smartbin" element={<SmartbinDemoTest />} />
         <Route path="/demo-smartbin/live" element={<SmartbinDemo />} />
+        <Route path="/education" element={<Education />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
