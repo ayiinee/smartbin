@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="640" viewBox="0 0 520 640" fill="none">
+  <defs>
+    <linearGradient id="binBody" x1="120" y1="50" x2="420" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DCEFE2"/>
+      <stop offset="1" stop-color="#B8DCC6"/>
+    </linearGradient>
+    <linearGradient id="binRim" x1="140" y1="70" x2="400" y2="140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#CFE8D6"/>
+    </linearGradient>
+    <linearGradient id="binShadow" x1="180" y1="180" x2="340" y2="580" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9BC3AD"/>
+      <stop offset="1" stop-color="#7FB39A"/>
+    </linearGradient>
+  </defs>
+  <rect x="130" y="90" width="260" height="430" rx="36" fill="url(#binBody)"/>
+  <rect x="150" y="60" width="220" height="70" rx="30" fill="url(#binRim)"/>
+  <rect x="190" y="150" width="140" height="320" rx="22" fill="url(#binShadow)" opacity="0.55"/>
+  <circle cx="260" cy="120" r="18" fill="#87CEEB"/>
+  <circle cx="260" cy="120" r="8" fill="#FFFFFF"/>
+  <rect x="210" y="520" width="100" height="40" rx="20" fill="#228B22" opacity="0.75"/>
+  <path d="M210 560h100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+</svg>
