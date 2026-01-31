@@ -8,4 +8,9 @@ joblib
 inference-sdk
 flask-sqlalchemy 
 flask-migrate  
+python-dotenv
+psycopg2-binary
 google-generativeai
+python-dotenv 
+sqlalchemy 
+psycopg2
