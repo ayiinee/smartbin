@@ -1,4 +1,4 @@
-# SmartBin Backend
+j# SmartBin Backend
 
 Flask API untuk SmartBin dengan **deteksi multimodal**: 
 - **Visual Detection**: Menggunakan Roboflow Inference untuk deteksi objek
@@ -45,6 +45,24 @@ pip install -r requirements.txt
    - Dapatkan API key di: https://app.roboflow.com/
    - Lihat panduan lengkap di `ROBOFLOW_SETUP.md`
 3. Model audio ada di `ml_models/audio/smartbin_audio_v1/`
+3. Isi `GEMINI_API_KEY` (wajib untuk fitur Gemini AI Analyst)
+4. Model audio ada di `ml_models/audio/smartbin_audio_v1/`
+
+## Seeder (Data Dummy)
+
+Script seeder massal untuk kebutuhan visualisasi dan laporan:
+
+```bash
+cd BackEnd
+python seed_bulk.py --days 180 --logs-per-day 20
+```
+
+Opsi penting:
+- `--days` jumlah hari data historis
+- `--logs-per-day` jumlah log per hari
+- `--bin-count` jumlah smartbin jika tabel masih kosong
+- `--anomalies-ratio` proporsi data anomali
+- `--no-carbon` skip carbon metrics
 
 ### Setup Roboflow Inference
 

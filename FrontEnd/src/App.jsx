@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
+import AnalyticsReports from "./pages/AnalyticsReports.jsx";
 import AIValidation from "./pages/AIValidation.jsx";
 import SmartbinDetails from "./pages/SmartbinDetails.jsx";
 import SmartbinDemo from "./pages/SmartbinDemo.jsx";
@@ -14,6 +15,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/analytics-reports" element={<AnalyticsReports />} />
         <Route path="/ai-validation" element={<AIValidation />} />
         <Route path="/smartbin/:id" element={<SmartbinDetails />} />
         <Route path="/demo-smartbin" element={<SmartbinDemoTest />} />

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -22,7 +23,8 @@ except Exception:  # pragma: no cover - optional dependency
 
 def create_app() -> Flask:
     if load_dotenv:
-        load_dotenv()
+        base_dir = Path(__file__).resolve().parents[1]
+        load_dotenv(dotenv_path=base_dir / ".env", override=False)
 
     app = Flask(__name__)
     app.config.from_object(Config)
