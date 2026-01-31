@@ -1,7 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
-import { getSmartbinById, statusOptions } from "../data/smartbins.js";
+import { statusOptions } from "../data/smartbins.js";
+import useSmartbin from "../hooks/useSmartbin.js";
 
 const recentActivity = [
   { title: "Collection Completed", detail: "Waste collected by Truck #A12", time: "Today, 08:30 AM", tone: "blue" },
@@ -24,12 +25,12 @@ const activityIconClass = {
 
 export default function SmartbinDetails() {
   const { id } = useParams();
-  const bin = getSmartbinById(id);
+  const { bin, isLoading, error } = useSmartbin(id);
   const status = statusOptions.find((item) => item.value === bin?.status);
 
-  const fillLevel = bin?.status === "full" ? 90 : bin?.status === "maintenance" ? 65 : 70;
-  const batteryLevel = bin?.status === "offline" ? 55 : 92;
-  const signalQuality = bin?.status === "offline" ? "Weak" : "Strong";
+  const fillLevel = typeof bin?.fillLevel === "number" ? bin.fillLevel : 0;
+  const batteryLevel = bin?.isActive ? 92 : 55;
+  const signalQuality = bin?.isActive ? "Strong" : "Weak";
 
   return (
     <div className="relative min-h-screen bg-[#F5F7F5] text-[#333333]">
@@ -39,13 +40,23 @@ export default function SmartbinDetails() {
 
         <div className="flex min-h-screen flex-1 flex-col pl-20 lg:pl-64">
           <DashboardHeader
-            title={bin ? `${bin.unitName} - ${bin.id}` : "Smartbin Detail"}
+            title={bin ? `${bin.name} - ${bin.id}` : "Smartbin Detail"}
             breadcrumb={`Dashboard / Smartbin / ${bin?.id ?? "Unknown"}`}
             searchPlaceholder="Search sensor or metric"
           />
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16 pt-28">
-            {!bin ? (
+            {isLoading ? (
+              <div className="mb-6 rounded-3xl border border-[#E2E8F0] bg-white px-6 py-5 text-sm text-[#475569]">
+                Memuat detail smartbin...
+              </div>
+            ) : null}
+            {error ? (
+              <div className="mb-6 rounded-3xl border border-[#F1C0C0] bg-[#FDF2F2] px-6 py-5 text-sm text-[#8B3A3A]">
+                {error}
+              </div>
+            ) : null}
+            {!isLoading && !bin ? (
               <div className="rounded-3xl border border-[#F1C0C0] bg-[#FDF2F2] px-6 py-5 text-sm text-[#8B3A3A]">
                 Smartbin details not found. Return to the{" "}
                 <Link to="/dashboard" className="font-semibold text-[#1F2937] underline">
@@ -66,7 +77,7 @@ export default function SmartbinDetails() {
                     </div>
                     <h2 className="mt-2 text-2xl font-semibold text-[#1F2937]">{bin.name}</h2>
                     <p className="mt-1 text-sm text-[#6B7280]">
-                      {bin.institutionName} - {bin.clusterName}
+                      {bin.locationName}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">

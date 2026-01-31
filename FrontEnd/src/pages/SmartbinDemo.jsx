@@ -4,6 +4,7 @@ import { useSmartBinDetection } from "../hooks/useSmartBinDetection";
 import { CameraFeed } from "../components/smartbin/CameraFeed";
 import { DetectionResult } from "../components/smartbin/DetectionResult";
 import { StatusPanel } from "../components/smartbin/StatusPanel";
+import { submitCrowdValidation } from "../services/validationApi";
 
 export default function SmartbinDemo() {
   const navigate = useNavigate();
@@ -36,13 +37,33 @@ export default function SmartbinDemo() {
     return () => clearTimeout(timer);
   }, [toast, setToast]);
 
+  const sendCrowdValidation = async (crowdLabel) => {
+    const aiLabel = latestVisual?.label || latestAudio?.label || "Unknown";
+    const aiConfidence = latestVisual?.confidence || latestAudio?.confidence || 0;
+    setToast("Sending to AI validation...");
+
+    try {
+      await submitCrowdValidation({
+        image_base64: annotatedImage,
+        ai_label: aiLabel,
+        ai_confidence: aiConfidence,
+        audio_label: latestAudio?.label || "",
+        audio_confidence: latestAudio?.confidence || 0,
+        crowd_label: crowdLabel || aiLabel,
+      });
+      resetDetection("Sent to AI validation queue!");
+    } catch (error) {
+      console.error("Crowd validation submit failed:", error);
+      setToast("Failed to send validation data.");
+    }
+  };
+
   const handleConfirm = () => {
-    resetDetection("Data saved!");
+    sendCrowdValidation(latestVisual?.label || latestAudio?.label || "Unknown");
   };
 
   const handleCorrection = (correctLabel) => {
-    // In a real app, you might send correctLabel to backend here
-    resetDetection("Correction saved!");
+    sendCrowdValidation(correctLabel);
   };
 
   const detected = Boolean(latestVisual || latestAudio);
@@ -58,7 +79,16 @@ export default function SmartbinDemo() {
         >
           SmartBin Demo
         </button>
-        <div className="text-xs text-[#6B7280]">Status: {statusLabel}</div>
+        <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+          <button
+            type="button"
+            onClick={() => navigate("/ai-validation")}
+            className="rounded-full border border-[#E2E8F0] bg-white px-3 py-1 text-[11px] font-semibold text-[#475569] transition hover:border-[#C1D9C5] hover:text-[#1F2937]"
+          >
+            Open AI Validation
+          </button>
+          <span>Status: {statusLabel}</span>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-16">

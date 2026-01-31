@@ -307,17 +307,68 @@ export function useSmartBinDetection() {
         source.connect(analyser);
         analyserRef.current = analyser;
 
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        let recorderNode = null;
+        let processor = null;
         const gain = audioContext.createGain();
         gain.gain.value = 0;
-        processor.onaudioprocess = (e) => {
-            const input = e.inputBuffer.getChannelData(0);
+
+        const pushAudioChunk = (input) => {
             audioChunksRef.current.push(new Float32Array(input));
             if (audioChunksRef.current.length > 60) audioChunksRef.current.shift();
         };
-        source.connect(processor);
-        processor.connect(gain);
-        gain.connect(audioContext.destination);
+
+        const setupAudioCapture = async () => {
+            if (audioContext.audioWorklet && typeof AudioWorkletNode !== "undefined") {
+                const workletSource = `
+                    class RecorderProcessor extends AudioWorkletProcessor {
+                        process(inputs) {
+                            const input = inputs[0];
+                            if (input && input[0]) {
+                                this.port.postMessage(input[0]);
+                            }
+                            return true;
+                        }
+                    }
+                    registerProcessor("recorder-processor", RecorderProcessor);
+                `;
+                const blob = new Blob([workletSource], { type: "application/javascript" });
+                const moduleUrl = URL.createObjectURL(blob);
+                try {
+                    await audioContext.audioWorklet.addModule(moduleUrl);
+                    recorderNode = new AudioWorkletNode(audioContext, "recorder-processor");
+                    recorderNode.port.onmessage = (event) => {
+                        if (event.data && event.data.length) {
+                            pushAudioChunk(event.data);
+                        }
+                    };
+                    source.connect(recorderNode);
+                    recorderNode.connect(gain);
+                    gain.connect(audioContext.destination);
+                } finally {
+                    URL.revokeObjectURL(moduleUrl);
+                }
+            } else {
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processor.onaudioprocess = (e) => {
+                    const input = e.inputBuffer.getChannelData(0);
+                    pushAudioChunk(input);
+                };
+                source.connect(processor);
+                processor.connect(gain);
+                gain.connect(audioContext.destination);
+            }
+        };
+
+        setupAudioCapture().catch(() => {
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = (e) => {
+                const input = e.inputBuffer.getChannelData(0);
+                pushAudioChunk(input);
+            };
+            source.connect(processor);
+            processor.connect(gain);
+            gain.connect(audioContext.destination);
+        });
 
         if (audioContext.state === 'suspended') {
             audioContext.resume().catch(() => { });
@@ -386,6 +437,10 @@ export function useSmartBinDetection() {
             if (processor) {
                 processor.disconnect();
                 processor.onaudioprocess = null;
+            }
+            if (recorderNode) {
+                recorderNode.disconnect();
+                recorderNode.port.onmessage = null;
             }
             if (source) source.disconnect();
             if (gain) gain.disconnect();

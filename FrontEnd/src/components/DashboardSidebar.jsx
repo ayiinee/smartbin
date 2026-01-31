@@ -30,6 +30,11 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12M9 9h6M9 15h6" />
     </svg>
   ),
+  play: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 6.5v11l9-5.5-9-5.5z" />
+    </svg>
+  ),
   education: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4-9 4-9-4 9-4z" />
@@ -51,6 +56,17 @@ const iconMap = {
 
 export default function DashboardSidebar() {
   const location = useLocation();
+
+  const isItemActive = (item) => {
+    if (!item.path) return false;
+    if (item.hash) {
+      return location.pathname === item.path && location.hash === item.hash;
+    }
+    if (item.exact) {
+      return location.pathname === item.path;
+    }
+    return location.pathname.startsWith(item.path);
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/90 px-4 py-6 shadow-sm backdrop-blur lg:w-64">
