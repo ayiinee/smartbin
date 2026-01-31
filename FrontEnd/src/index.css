@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 * {
   box-sizing: border-box;
@@ -21,4 +20,9 @@ body {
   --sb-sky: #7cc7ff;
   --sb-stone: #b8c4be;
   --sb-cloud: #eef4f1;
+}
+
+/* Prevent global img sizing rules from breaking Leaflet tiles. */
+.leaflet-container img {
+  max-width: none !important;
 }

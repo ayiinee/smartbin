@@ -46,7 +46,7 @@ const iconMap = {
 
 export default function DashboardSidebar() {
   return (
-    <aside className="relative z-10 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/80 px-4 py-6 backdrop-blur lg:w-64">
+    <aside className="fixed left-0 top-0 z-30 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/90 px-4 py-6 shadow-sm backdrop-blur lg:w-64">
       <div className="flex items-center gap-3 px-2">
         <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#228B22]">SmartBin AI</span>
       </div>
