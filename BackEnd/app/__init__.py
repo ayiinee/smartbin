@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from app.config import Config
-from app.extensions import db, cors
+from app.extensions import db, migrate, cors
 
 from app.api.dashboard import dashboard_bp
 from app.api.validation import validation_bp
@@ -14,7 +14,11 @@ def create_app():
 
     # init extensions
     db.init_app(app)
+    migrate.init_app(app, db)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+
+    # ensure models are registered for migrations
+    from app.db_models import models  # noqa: F401
 
     # health check
     @app.get("/api/health")
@@ -26,6 +30,6 @@ def create_app():
     app.register_blueprint(validation_bp, url_prefix="/api/validation")
     app.register_blueprint(bins_bp, url_prefix="/api/bins")
     app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
-    app.register_blueprint(reports_bp, url_prefix="api/reports.py")
+    app.register_blueprint(reports_bp, url_prefix="/api/reports")
 
     return app
