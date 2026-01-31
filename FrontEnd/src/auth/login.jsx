@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Recycle } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import SmartbinLogo from "../components/SmartbinLogo.jsx";
 
 const Login = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -17,9 +18,9 @@ const Login = () => {
         <div className="absolute inset-0 z-10 bg-linear-to-t from-[#102216] via-[#102216]/70 to-transparent" />
         <div className="relative z-20 max-w-lg pb-10">
           <div className="mb-6 flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-full bg-white/10 text-primary">
-              <Recycle size={24} />
-            </span>
+            <div className="flex items-center justify-center rounded-full bg-white/10 p-1 shadow-sm">
+              <SmartbinLogo className="h-11 w-11" />
+            </div>
             <span className="text-2xl font-bold tracking-tight text-white font-display">
               SmartBin AI
             </span>
@@ -52,9 +53,9 @@ const Login = () => {
 
       <section className="relative flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2 lg:px-12">
         <div className="absolute left-6 top-6 flex items-center gap-2 lg:hidden">
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Recycle size={20} />
-          </span>
+          <div className="flex items-center justify-center rounded-full bg-primary/10 p-1">
+            <SmartbinLogo className="h-9 w-9" />
+          </div>
           <span className="text-lg font-bold text-slate-900 font-display">
             SmartBin AI
           </span>

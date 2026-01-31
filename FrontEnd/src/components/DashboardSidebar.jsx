@@ -1,12 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
+import SmartbinLogo from "./SmartbinLogo.jsx";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: "grid", path: "/dashboard" },
   { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
   { label: "AI Validation", icon: "brain", path: "/ai-validation" },
-  { label: "SmartBin Units", icon: "bin", path: "/smartbin/1" },
   { label: "Education", icon: "education", path: "/education" },
-  { label: "Settings", icon: "gear", path: "/settings" },
 ];
 
 const iconMap = {
@@ -71,6 +70,7 @@ export default function DashboardSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/90 px-4 py-6 shadow-sm backdrop-blur lg:w-64">
       <div className="flex items-center gap-3 px-2">
+        <SmartbinLogo className="h-10 w-10 border border-[#E2E8F0]" />
         <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#228B22]">SmartBin AI</span>
       </div>
 
@@ -92,10 +92,18 @@ export default function DashboardSidebar() {
             </Link>
           );
         })}
+
+        <Link
+          to="/demo-smartbin"
+          className="flex w-full items-center justify-center rounded-2xl bg-[#1B9F52] px-3 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#178a43]"
+        >
+          <span className="text-current">{iconMap.play}</span>
+          <span className="hidden lg:inline">Demo</span>
+        </Link>
       </nav>
 
       <div className="mt-auto flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-3 py-3 shadow-sm">
-        <div className="h-9 w-9 rounded-full bg-[#E2E8F0]" />
+        <SmartbinLogo className="h-9 w-9 border border-[#E2E8F0]" />
         <div className="hidden lg:block">
           <div className="text-sm font-semibold text-[#1F2937]">Facility Manager</div>
           <div className="text-xs text-[#6B7280]">SmartBin HQ</div>

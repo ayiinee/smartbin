@@ -13,7 +13,6 @@ import {
   Leaf,
   Mail,
   PlayCircle,
-  Recycle,
   Share2,
   Sparkles,
   Trash2,
@@ -22,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import fallbackHero from '../assets/smartbin-ai.png';
+import SmartbinLogo from '../components/SmartbinLogo.jsx';
 
 const parallaxFrameModules = import.meta.glob('../assets/parallax/*.png', {
   eager: true,
@@ -320,8 +320,8 @@ const NavBar = () => {
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-full gradient-bg flex items-center justify-center text-white shadow-md">
-            <Recycle size={20} />
+          <div className="flex items-center justify-center rounded-full bg-white/80 p-1 shadow-md">
+            <SmartbinLogo className="h-9 w-9" />
           </div>
           <div className="flex items-center gap-3">
             <h2 className="text-slate-900 text-lg font-display font-bold tracking-tight">
@@ -1028,8 +1028,8 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
           <div className="md:w-1/3">
             <div className="flex items-center gap-3 mb-6">
-              <div className="size-8 rounded-full gradient-bg flex items-center justify-center text-white shadow-sm">
-                <Recycle size={20} />
+              <div className="flex items-center justify-center rounded-full bg-white/80 p-1 shadow-sm">
+                <SmartbinLogo className="h-8 w-8" />
               </div>
               <h2 className="text-slate-900 text-xl font-display font-bold">SmartBin AI</h2>
             </div>
