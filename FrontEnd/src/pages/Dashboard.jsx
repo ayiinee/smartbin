@@ -5,7 +5,8 @@ import { latLngBounds } from "leaflet";
 import { Link } from "react-router-dom";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
-import { gisBins, statusOptions } from "../data/smartbins.js";
+import useDashboardData from "../hooks/useDashboardData.js";
+import { statusOptions } from "../data/smartbins.js";
 
 function MapBounds({ bins }) {
   const map = useMap();
@@ -35,67 +36,33 @@ function MapSizeFix() {
   return null;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
 export default function Dashboard() {
-  const [selectedInstitution, setSelectedInstitution] = useState("all");
-  const [selectedCluster, setSelectedCluster] = useState("all");
-  const [selectedUnit, setSelectedUnit] = useState("all");
+  const { dashboard, bins, isLoading, errors } = useDashboardData();
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const [statusFilters, setStatusFilters] = useState(statusOptions.map((status) => status.value));
 
-  const institutions = useMemo(() => {
-    const map = new Map();
-    gisBins.forEach((bin) => {
-      if (!map.has(bin.institutionId)) {
-        map.set(bin.institutionId, { id: bin.institutionId, name: bin.institutionName });
-      }
-    });
-    return Array.from(map.values());
+  const statusLookup = useMemo(() => {
+    return statusOptions.reduce((acc, status) => {
+      acc[status.value] = status;
+      return acc;
+    }, {});
   }, []);
 
-  const clusters = useMemo(() => {
-    const source = selectedInstitution === "all" ? gisBins : gisBins.filter((bin) => bin.institutionId === selectedInstitution);
-    const map = new Map();
-    source.forEach((bin) => {
-      if (!map.has(bin.clusterId)) {
-        map.set(bin.clusterId, { id: bin.clusterId, name: bin.clusterName });
-      }
-    });
-    return Array.from(map.values());
-  }, [selectedInstitution]);
-
-  const units = useMemo(() => {
-    let source = gisBins;
-    if (selectedInstitution !== "all") {
-      source = source.filter((bin) => bin.institutionId === selectedInstitution);
-    }
-    if (selectedCluster !== "all") {
-      source = source.filter((bin) => bin.clusterId === selectedCluster);
-    }
-    const map = new Map();
-    source.forEach((bin) => {
-      if (!map.has(bin.unitId)) {
-        map.set(bin.unitId, { id: bin.unitId, name: bin.unitName });
-      }
-    });
-    return Array.from(map.values());
-  }, [selectedInstitution, selectedCluster]);
+  const locationOptions = useMemo(() => {
+    return bins.map((bin) => ({ id: bin.id, name: bin.locationName }));
+  }, [bins]);
 
   const filteredBins = useMemo(() => {
     const activeStatuses = statusFilters.length ? statusFilters : statusOptions.map((status) => status.value);
-    return gisBins.filter((bin) => {
-      if (selectedInstitution !== "all" && bin.institutionId !== selectedInstitution) return false;
-      if (selectedCluster !== "all" && bin.clusterId !== selectedCluster) return false;
-      if (selectedUnit !== "all" && bin.unitId !== selectedUnit) return false;
+    return bins.filter((bin) => {
+      if (selectedLocation !== "all" && bin.id !== selectedLocation) return false;
       if (!activeStatuses.includes(bin.status)) return false;
       return true;
     });
-  }, [selectedInstitution, selectedCluster, selectedUnit, statusFilters]);
+  }, [bins, selectedLocation, statusFilters]);
 
   const handleResetFilters = () => {
-    setSelectedInstitution("all");
-    setSelectedCluster("all");
-    setSelectedUnit("all");
+    setSelectedLocation("all");
     setStatusFilters(statusOptions.map((status) => status.value));
   };
 
@@ -103,40 +70,7 @@ export default function Dashboard() {
     setStatusFilters((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
   };
 
-  const [dashboard, setDashboard] = useState(null);
-  const [loadError, setLoadError] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadDashboard() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/`);
-        if (!response.ok) {
-          throw new Error(`Dashboard request failed: ${response.status}`);
-        }
-        const payload = await response.json();
-        if (isMounted) {
-          setDashboard(payload);
-          setLoadError("");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setLoadError("Gagal memuat data dari backend.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadDashboard();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const loadError = errors.length ? errors.join(" ") : "";
 
   return (
     <div className="relative min-h-screen bg-[#F5F7F5] text-[#333333]">
@@ -191,7 +125,7 @@ export default function Dashboard() {
                   <MapSizeFix />
                   <MapBounds bins={filteredBins} />
                   {filteredBins.map((bin) => {
-                    const status = statusOptions.find((item) => item.value === bin.status);
+                    const status = statusLookup[bin.status];
                     return (
                       <CircleMarker
                         key={bin.id}
@@ -202,13 +136,11 @@ export default function Dashboard() {
                         <Popup>
                           <div className="text-sm">
                             <div className="text-base font-semibold text-[#1F2937]">{bin.name}</div>
-                            <div className="mt-1 text-[#4B5563]">{bin.institutionName}</div>
-                            <div className="text-[#6B7280]">
-                              {bin.clusterName} • {bin.unitName}
-                            </div>
+                            <div className="mt-1 text-[#4B5563]">{bin.locationName}</div>
                             <div className="mt-2 text-xs uppercase tracking-[0.2em] text-[#6B7280]">Status</div>
                             <div className="font-semibold text-[#1F2937]">{status?.label}</div>
-                            <div className="mt-2 text-xs text-[#6B7280]">Updated {bin.updatedAt}</div>
+                            <div className="mt-2 text-xs text-[#6B7280]">Fill level {bin.fillLevel}%</div>
+                            <div className="mt-1 text-xs text-[#6B7280]">Updated {bin.updatedAt}</div>
                           </div>
                         </Popup>
                       </CircleMarker>
@@ -252,61 +184,21 @@ export default function Dashboard() {
 
                   <div className="mt-3 space-y-3">
                     <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
-                      Institution
+                      Location
                       <select
-                        value={selectedInstitution}
-                        onChange={(event) => {
-                          setSelectedInstitution(event.target.value);
-                          setSelectedCluster("all");
-                          setSelectedUnit("all");
-                        }}
+                        value={selectedLocation}
+                        onChange={(event) => setSelectedLocation(event.target.value)}
                         className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
                       >
-                        <option value="all">All Institutions</option>
-                        {institutions.map((inst) => (
-                          <option key={inst.id} value={inst.id}>
-                            {inst.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
-                      Cluster
-                      <select
-                        value={selectedCluster}
-                        onChange={(event) => {
-                          setSelectedCluster(event.target.value);
-                          setSelectedUnit("all");
-                        }}
-                        className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
-                      >
-                        <option value="all">All Clusters</option>
-                        {clusters.map((cluster) => (
-                          <option key={cluster.id} value={cluster.id}>
-                            {cluster.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">
-                      Smartbin Unit
-                      <select
-                        value={selectedUnit}
-                        onChange={(event) => setSelectedUnit(event.target.value)}
-                        className="mt-2 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#1F2937] shadow-sm focus:border-[#228B22] focus:outline-none"
-                      >
-                        <option value="all">All Units</option>
-                        {units.map((unit) => (
-                          <option key={unit.id} value={unit.id}>
-                            {unit.name}
+                        <option value="all">All Locations</option>
+                        {locationOptions.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name}
                           </option>
                         ))}
                       </select>
                     </label>
                   </div>
-
                   <div className="mt-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">Status</div>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -333,7 +225,7 @@ export default function Dashboard() {
 
                   <div className="mt-4 rounded-xl bg-[#F8FAFC] px-3 py-2 text-[11px] text-[#475569]">
                     Showing <span className="font-semibold text-[#1F2937]">{filteredBins.length}</span> bins from{" "}
-                    <span className="font-semibold text-[#1F2937]">{gisBins.length}</span> total devices.
+                    <span className="font-semibold text-[#1F2937]">{bins.length}</span> total devices.
                   </div>
                 </div>
 
@@ -341,7 +233,7 @@ export default function Dashboard() {
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <div className="rounded-3xl bg-white/90 px-6 py-4 text-center text-sm text-[#475569] shadow-lg backdrop-blur">
                       <div className="text-base font-semibold text-[#1F2937]">No bins match these filters</div>
-                      <div className="mt-1">Try expanding the institution or status selection.</div>
+                      <div className="mt-1">Try adjusting the location or status selection.</div>
                     </div>
                   </div>
                 )}
@@ -399,7 +291,7 @@ export default function Dashboard() {
             <section className="mt-6 rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-[#1F2937]">Smartbin List</h2>
-                <span className="text-xs text-[#6B7280]">{gisBins.length} smartbins</span>
+                <span className="text-xs text-[#6B7280]">{bins.length} smartbins</span>
               </div>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-left text-sm text-[#4B5563]">
@@ -412,19 +304,17 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {gisBins.map((bin, index) => {
-                      const status = statusOptions.find((item) => item.value === bin.status);
+                    {bins.map((bin, index) => {
+                      const status = statusLookup[bin.status];
                       return (
                       <tr
                         key={bin.id}
-                        className={index !== gisBins.length - 1 ? "border-b border-[#F1F5F9]" : ""}
+                        className={index !== bins.length - 1 ? "border-b border-[#F1F5F9]" : ""}
                       >
                         <td className="py-4 pr-4 font-semibold text-[#1F2937]">{bin.name}</td>
                         <td className="py-4 pr-4">
-                          <div className="font-medium text-[#1F2937]">{bin.institutionName}</div>
-                          <div className="text-xs text-[#6B7280]">
-                            {bin.clusterName} â€¢ {bin.unitName}
-                          </div>
+                          <div className="font-medium text-[#1F2937]">{bin.locationName}</div>
+                          <div className="text-xs text-[#6B7280]">Fill level {bin.fillLevel}%</div>
                         </td>
                         <td className="py-4 pr-4">
                           <span

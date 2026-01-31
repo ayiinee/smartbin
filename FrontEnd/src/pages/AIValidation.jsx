@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
+import { fetchValidationQueue, resolveValidationItem } from "../services/validationApi";
 
 import paperWaste from "../assets/sampah-kertas.png";
 import paperWasteAlt from "../assets/sampah-kertas-2.png";
@@ -99,6 +100,57 @@ const statusBadges = {
 export default function AIValidation() {
   const [items, setItems] = useState(initialQueue);
   const [activeFilter, setActiveFilter] = useState("pending");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+
+  const formatConfidence = (value) => {
+    if (typeof value !== "number") return "N/A";
+    const normalized = value <= 1 ? value * 100 : value;
+    return `${Math.round(normalized)}%`;
+  };
+
+  const mapApiItem = (item) => {
+    const predictions = [];
+    if (item.ai_label) predictions.push(`AI: ${item.ai_label}?`);
+    if (item.crowd_label) predictions.push(`Crowd: ${item.crowd_label}?`);
+
+    return {
+      id: item.id,
+      image: item.image_url || "",
+      predictions,
+      aiLabel: item.ai_label || "Unknown",
+      binName: item.bin_name || "Smartbin Demo",
+      location: item.location || "Demo location",
+      timestamp: item.timestamp ? new Date(item.timestamp).toLocaleString() : "N/A",
+      confidence: formatConfidence(item.ai_confidence),
+      status: item.status || "pending",
+      resolvedType: item.resolved_type || "",
+      showReject: false,
+    };
+  };
+
+  const loadQueue = async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const apiItems = await fetchValidationQueue();
+      if (apiItems.length) {
+        setItems(apiItems.map(mapApiItem));
+      } else {
+        setItems([]);
+      }
+    } catch (error) {
+      console.error("Failed to load validation queue:", error);
+      setLoadError("Gagal memuat antrean validasi. Menampilkan data demo.");
+      setItems(initialQueue);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadQueue();
+  }, []);
 
   const stats = useMemo(() => {
     return items.reduce(
@@ -116,19 +168,34 @@ export default function AIValidation() {
     return items.filter((item) => item.status === activeFilter);
   }, [items, activeFilter]);
 
-  const handleConfirm = (id) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "confirmed",
-              resolvedType: item.predictions[0]?.replace("?", "") ?? "Confirmed",
-              showReject: false,
-            }
-          : item
-      )
-    );
+  const handleConfirm = async (id) => {
+    const target = items.find((item) => item.id === id);
+    if (!target) return;
+    if (typeof id === "string") {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status: "confirmed",
+                resolvedType: item.predictions[0]?.replace("?", "") ?? "Confirmed",
+                showReject: false,
+              }
+            : item
+        )
+      );
+      return;
+    }
+    try {
+      const payload = await resolveValidationItem(id, { action: "confirm" });
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...mapApiItem(payload), showReject: false } : item
+        )
+      );
+    } catch (error) {
+      console.error("Failed to confirm item:", error);
+    }
   };
 
   const handleRejectToggle = (id) => {
@@ -144,20 +211,33 @@ export default function AIValidation() {
     );
   };
 
-  const handleRejectSelect = (id, value) => {
+  const handleRejectSelect = async (id, value) => {
     if (!value) return;
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "rejected",
-              resolvedType: value,
-              showReject: false,
-            }
-          : item
-      )
-    );
+    if (typeof id === "string") {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status: "rejected",
+                resolvedType: value,
+                showReject: false,
+              }
+            : item
+        )
+      );
+      return;
+    }
+    try {
+      const payload = await resolveValidationItem(id, { action: "reject", resolved_type: value });
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...mapApiItem(payload), showReject: false } : item
+        )
+      );
+    } catch (error) {
+      console.error("Failed to reject item:", error);
+    }
   };
 
   return (
@@ -224,11 +304,29 @@ export default function AIValidation() {
               })}
             </section>
 
+            {isLoading ? (
+              <section className="mt-6 rounded-3xl border border-[#E2E8F0] bg-white px-6 py-10 text-center text-sm text-[#6B7280] shadow-sm">
+                Memuat antrean validasi...
+              </section>
+            ) : null}
+
+            {loadError ? (
+              <section className="mt-6 rounded-3xl border border-[#F1C0C0] bg-[#FDF2F2] px-6 py-4 text-sm text-[#8B3A3A] shadow-sm">
+                {loadError}
+              </section>
+            ) : null}
+
             <section className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredItems.map((item) => (
                 <article key={item.id} className="overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm">
                   <div className="relative h-44 overflow-hidden bg-[#E9F0EA]">
-                    <img src={item.image} alt={item.binName} className="h-full w-full object-cover" />
+                    {item.image ? (
+                      <img src={item.image} alt={item.binName} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-[#6B7280]">
+                        No image available
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
                     <div className="absolute left-4 bottom-4 right-4 flex flex-wrap gap-2">
                       {item.predictions.map((prediction) => (

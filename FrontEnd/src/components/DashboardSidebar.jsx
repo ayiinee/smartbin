@@ -1,9 +1,12 @@
+import { Link, useLocation } from "react-router-dom";
+
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", active: true },
-  { label: "Analytics & Reports", icon: "chart" },
-  { label: "AI Validation", icon: "brain" },
-  { label: "SmartBin Units", icon: "bin" },
-  { label: "Settings", icon: "gear" },
+  { label: "Dashboard", icon: "grid", path: "/dashboard", exact: true },
+  { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
+  { label: "AI Validation", icon: "brain", path: "/ai-validation" },
+  { label: "SmartBin Demo", icon: "play", path: "/demo-smartbin" },
+  { label: "SmartBin Units", icon: "bin", path: "/dashboard", hash: "#smartbin-units" },
+  { label: "Settings", icon: "gear", disabled: true },
 ];
 
 const iconMap = {
@@ -25,6 +28,11 @@ const iconMap = {
         d="M9.5 4.5a3 3 0 015 0 3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-1 2.5 3 3 0 011 2.3 3.2 3.2 0 01-2.5 3.1 3 3 0 01-5.9 0 3.2 3.2 0 01-2.5-3.1 3 3 0 011-2.3 3.5 3.5 0 01-1-2.5 3.5 3.5 0 013.4-3.5z"
       />
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12M9 9h6M9 15h6" />
+    </svg>
+  ),
+  play: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 6.5v11l9-5.5-9-5.5z" />
     </svg>
   ),
   education: (
@@ -49,6 +57,17 @@ const iconMap = {
 export default function DashboardSidebar() {
   const location = useLocation();
 
+  const isItemActive = (item) => {
+    if (!item.path) return false;
+    if (item.hash) {
+      return location.pathname === item.path && location.hash === item.hash;
+    }
+    if (item.exact) {
+      return location.pathname === item.path;
+    }
+    return location.pathname.startsWith(item.path);
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-20 flex-col border-r border-[#E2E8F0] bg-white/90 px-4 py-6 shadow-sm backdrop-blur lg:w-64">
       <div className="flex items-center gap-3 px-2">
@@ -57,19 +76,37 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.active;
+          const isActive = isItemActive(item);
+          const className = `group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+            isActive
+              ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
+              : "text-[#475569] hover:bg-[#F1F5F9]"
+          } ${item.disabled ? "cursor-not-allowed opacity-60 hover:bg-transparent" : ""}`;
+
+          const content = (
+            <>
+              <span className="text-current">{iconMap[item.icon]}</span>
+              <span className="hidden lg:inline">{item.label}</span>
+            </>
+          );
+
+          if (item.path && !item.disabled) {
+            const to = item.hash ? `${item.path}${item.hash}` : item.path;
+            return (
+              <Link key={item.label} to={to} className={className}>
+                {content}
+              </Link>
+            );
+          }
+
           return (
             <button
               key={item.label}
               type="button"
-              className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-                isActive
-                  ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
-                  : "text-[#475569] hover:bg-[#F1F5F9]"
-              }`}
+              className={className}
+              aria-disabled={item.disabled ? "true" : "false"}
             >
-              <span className="text-current">{iconMap[item.icon]}</span>
-              <span className="hidden lg:inline">{item.label}</span>
+              {content}
             </button>
           );
         })}
