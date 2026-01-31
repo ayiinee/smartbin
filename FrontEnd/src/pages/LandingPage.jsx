@@ -65,14 +65,7 @@ const HeroOverlay = ({ align = 'center', headlineStyle, subheadlineStyle, ctaSty
     <div
       className={`pointer-events-none absolute inset-0 z-20 flex ${alignment.container} px-6 py-16 md:px-14 lg:px-20`}
     >
-      <div className={`flex max-w-3xl flex-col gap-6 ${alignment.inner}`}>
-        <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 backdrop-blur">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-200">
-            <Sparkles size={16} />
-          </span>
-          SmartBin AI · Live Intelligence
-        </div>
-
+      <div className={`flex h-full max-w-3xl mt-86 flex-col gap-6 ${alignment.inner} justify-center`}>
         <h1
           className="text-balance text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl font-display"
           style={headlineStyle}
@@ -272,13 +265,6 @@ const ParallaxHero = ({ overlayAlign = 'left' }) => {
           />
         </div>
       </div>
-
-      <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">
-        <span>Scroll to explore</span>
-        <span className="flex h-8 w-5 items-start justify-center rounded-full border border-white/30">
-          <span className="mt-2 h-2 w-2 animate-bounce rounded-full bg-emerald-200 motion-reduce:animate-none" />
-        </span>
-      </div>
     </section>
   );
 };
@@ -326,12 +312,22 @@ const NavBar = () => {
     <div
       className={`fixed top-0 w-full z-50 px-4 transition-all duration-300 ${isScrolled ? 'pt-2' : 'pt-4'} flex justify-center`}
     >
-      <nav className="glass-panel w-full max-w-300 rounded-full px-6 py-3 flex items-center justify-between shadow-soft">
+      <nav
+        className={`glass-panel w-full max-w-300 rounded-full px-6 py-3 flex items-center justify-between border border-white/60 backdrop-blur-xl transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white/85 shadow-[0_18px_40px_rgba(15,23,42,0.18)]'
+            : 'bg-white/70 shadow-[0_12px_30px_rgba(15,23,42,0.12)]'
+        }`}
+      >
         <div className="flex items-center gap-3">
-          <div className="size-8 rounded-full gradient-bg flex items-center justify-center text-white shadow-md">
+          <div className="size-9 rounded-full gradient-bg flex items-center justify-center text-white shadow-md">
             <Recycle size={20} />
           </div>
-          <h2 className="text-slate-900 text-lg font-display font-bold tracking-tight">SmartBin AI</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-slate-900 text-lg font-display font-bold tracking-tight">
+              SmartBin AI
+            </h2>
+          </div>
         </div>
 
         <div className="hidden md:flex items-center gap-8">
@@ -339,7 +335,7 @@ const NavBar = () => {
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-              className="text-slate-600 hover:text-primary text-sm font-medium transition-colors font-display"
+              className="relative text-slate-600 text-sm font-medium transition-colors font-display hover:text-slate-900 after:content-[''] after:absolute after:-bottom-2 after:left-1/2 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full hover:after:left-0"
             >
               {item}
             </a>
@@ -353,7 +349,7 @@ const NavBar = () => {
               aria-haspopup="menu"
               aria-expanded={isAuthMenuOpen}
               onClick={() => setIsAuthMenuOpen((prev) => !prev)}
-              className="flex items-center justify-center size-10 rounded-full border border-white/40 bg-white/70 text-slate-700 shadow-soft backdrop-blur-sm transition-all hover:bg-white hover:text-slate-900 hover:shadow-lg"
+              className="flex items-center justify-center size-10 rounded-full border border-white/40 bg-white/80 text-slate-700 shadow-soft backdrop-blur-sm transition-all hover:bg-white hover:text-slate-900 hover:shadow-lg"
             >
               <User size={18} />
             </button>
@@ -361,7 +357,7 @@ const NavBar = () => {
             {isAuthMenuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 mt-3 w-44 rounded-2xl border border-white/40 bg-white/90 p-2 text-sm shadow-xl backdrop-blur-md"
+                className="absolute right-0 mt-3 w-44 rounded-2xl border border-white/60 bg-white/95 p-2 text-sm shadow-xl backdrop-blur-md"
               >
                 <a
                   href="/signup"
@@ -381,7 +377,8 @@ const NavBar = () => {
             )}
           </div>
 
-          <button className="flex items-center justify-center overflow-hidden rounded-full h-10 px-6 gradient-bg hover:shadow-lg hover:shadow-secondary/30 transition-all text-white text-sm font-display font-bold">
+          <button className="flex items-center gap-2 justify-center overflow-hidden rounded-full h-10 px-6 gradient-bg hover:shadow-lg hover:shadow-secondary/30 transition-all text-white text-sm font-display font-bold">
+            <Sparkles size={16} />
             Book a Demo
           </button>
         </div>
@@ -450,20 +447,71 @@ const Features = () => {
   ];
 
   return (
-    <section id="features" className="py-24 relative bg-slate-50">
-      <div className="max-w-300 mx-auto px-4">
+    <section id="features" className="py-24 relative overflow-hidden bg-slate-50">
+      <div className="absolute inset-0">
+        <div className="absolute -top-32 left-[10%] h-72 w-72 rounded-full bg-emerald-400/10 blur-[120px]"></div>
+        <div className="absolute bottom-[-20%] right-[8%] h-96 w-96 rounded-full bg-sky-400/10 blur-[140px]"></div>
+      </div>
+      <div className="max-w-300 mx-auto px-4 relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-12 mb-16">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
+              Core Capabilities
+            </span>
+            <h2 className="mt-5 text-3xl md:text-4xl font-display font-bold text-slate-900">
+              Intelligent sorting meets real-time sustainability insights.
+            </h2>
+            <p className="mt-4 text-slate-500">
+              SmartBin AI blends computer vision, edge AI, and operational analytics so every
+              facility can hit zero-waste targets faster.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+            <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm">
+              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Accuracy</div>
+              <div className="text-2xl font-display font-bold text-slate-900">99%</div>
+              <div className="text-xs text-slate-500">Model precision</div>
+            </div>
+            <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm">
+              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Response</div>
+              <div className="text-2xl font-display font-bold text-slate-900">0.8s</div>
+              <div className="text-xs text-slate-500">Avg. decision time</div>
+            </div>
+            <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm">
+              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Fleet</div>
+              <div className="text-2xl font-display font-bold text-slate-900">120+</div>
+              <div className="text-xs text-slate-500">Sites connected</div>
+            </div>
+            <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm">
+              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Impact</div>
+              <div className="text-2xl font-display font-bold text-slate-900">-38%</div>
+              <div className="text-xs text-slate-500">Waste to landfill</div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, idx) => (
-            <div key={idx} className="feature-card p-6 rounded-xl cursor-default group">
+            <div
+              key={idx}
+              className="feature-card group relative overflow-hidden rounded-2xl border border-white/70 bg-white/80 p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
               <div
-                className={`size-12 rounded-lg flex items-center justify-center mb-4 transition-colors ${feature.colorClass} ${feature.hoverClass}`}
+                className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                style={{
+                  background:
+                    'radial-gradient(circle at top, rgba(16,185,129,0.08), transparent 60%)',
+                }}
+              ></div>
+              <div
+                className={`relative size-12 rounded-xl flex items-center justify-center mb-5 transition-colors ${feature.colorClass} ${feature.hoverClass}`}
               >
                 {feature.icon}
               </div>
               <h3 className="text-lg font-display font-bold text-slate-900 mb-2">
                 {feature.title}
               </h3>
-              <p className="text-slate-500 text-sm">{feature.desc}</p>
+              <p className="text-slate-500 text-sm leading-relaxed">{feature.desc}</p>
             </div>
           ))}
         </div>
@@ -473,12 +521,23 @@ const Features = () => {
 };
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="py-24 bg-white">
-      <div className="max-w-300 mx-auto px-4">
-        <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900">
+    <section id="how-it-works" className="py-24 bg-white relative overflow-hidden">
+      <div className="absolute inset-0">
+        <div className="absolute -top-24 right-[12%] h-64 w-64 rounded-full bg-emerald-400/10 blur-[120px]"></div>
+        <div className="absolute bottom-[-18%] left-[8%] h-72 w-72 rounded-full bg-sky-400/10 blur-[140px]"></div>
+      </div>
+      <div className="max-w-300 mx-auto px-4 relative z-10">
+        <div className="text-center mb-16">
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] text-white">
+            How It Works
+          </span>
+          <h2 className="mt-6 text-3xl md:text-4xl font-display font-bold text-slate-900">
             Intelligence at the Edge
           </h2>
+          <p className="mt-4 text-slate-500 max-w-2xl mx-auto">
+            Each SmartBin combines vision sensors, AI inference, and automated routing to keep
+            waste streams clean without slowing people down.
+          </p>
         </div>
 
         <div className="relative">
@@ -488,13 +547,14 @@ const HowItWorks = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
             <div className="flex flex-col items-center text-center gap-6 group">
               <div className="size-20 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg shadow-slate-200/50 relative transition-transform duration-300 group-hover:-translate-y-2">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white shadow-md">
+                  Step 1
+                </div>
                 <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <Camera className="text-primary w-10 h-10 relative z-10" />
               </div>
               <div>
-                <h3 className="text-xl font-display font-bold text-slate-900 mb-2">
-                  1. Detection
-                </h3>
+                <h3 className="text-xl font-display font-bold text-slate-900 mb-2">Detection</h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-70">
                   High-resolution internal cameras capture items as they are deposited.
                 </p>
@@ -503,34 +563,57 @@ const HowItWorks = () => {
 
             <div className="flex flex-col items-center text-center gap-6 group">
               <div className="size-20 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg shadow-slate-200/50 relative transition-transform duration-300 group-hover:-translate-y-2">
-                <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Brain className="text-secondary w-10 h-10 relative z-10" />
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white shadow-md">
+                  Step 2
+                </div>
+                <div className="absolute inset-0 bg-slate-900/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Brain className="text-slate-900 w-10 h-10 relative z-10" />
               </div>
               <div>
-                <h3 className="text-xl font-display font-bold text-slate-900 mb-2">
-                  2. Classification
-                </h3>
+                <h3 className="text-xl font-display font-bold text-slate-900 mb-2">AI Analysis</h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-70">
-                  Our proprietary AI model identifies material type and contamination level in 50ms.
+                  On-device inference classifies materials in under a second.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col items-center text-center gap-6 group">
               <div className="size-20 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg shadow-slate-200/50 relative transition-transform duration-300 group-hover:-translate-y-2">
-                <div className="absolute inset-0 bg-blue-400/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Recycle className="text-blue-500 w-10 h-10 relative z-10" />
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sky-500 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white shadow-md">
+                  Step 3
+                </div>
+                <div className="absolute inset-0 bg-sky-400/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Trash2 className="text-sky-500 w-10 h-10 relative z-10" />
               </div>
               <div>
                 <h3 className="text-xl font-display font-bold text-slate-900 mb-2">
-                  3. Auto-Sort
+                  Smart Routing
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed max-w-70">
-                  Mechanical flaps divert the item into the correct internal bin instantly.
+                  Robotic panels sort the item into the correct internal bin instantly.
                 </p>
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { label: 'Latency', value: '< 800ms', detail: 'From detection to action' },
+            { label: 'Uptime', value: '99.5%', detail: 'Edge redundancy built in' },
+            { label: 'Data Sync', value: 'Live', detail: 'Cloud sync every 30s' },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5 text-center"
+            >
+              <div className="text-xs uppercase tracking-[0.35em] text-slate-400 mb-2">
+                {item.label}
+              </div>
+              <div className="text-2xl font-display font-bold text-slate-900">{item.value}</div>
+              <div className="text-xs text-slate-500 mt-1">{item.detail}</div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -538,10 +621,20 @@ const HowItWorks = () => {
 };
 
 const ComparisonSection = () => {
+  const comparisonStats = [
+    { label: 'Contamination', value: '-62%', detail: 'Cleaner waste streams' },
+    { label: 'Recycling Revenue', value: '+28%', detail: 'Higher rebates' },
+    { label: 'Reporting Time', value: '-45%', detail: 'Automated compliance' },
+  ];
+
   return (
     <section id="impact" className="py-24 relative overflow-hidden bg-slate-50">
-      <div className="max-w-300 mx-auto px-4">
-        <div className="text-center mb-16">
+      <div className="absolute inset-0">
+        <div className="absolute -top-24 left-[8%] h-64 w-64 rounded-full bg-emerald-400/10 blur-[120px]"></div>
+        <div className="absolute bottom-[-20%] right-[10%] h-96 w-96 rounded-full bg-sky-400/10 blur-[140px]"></div>
+      </div>
+      <div className="max-w-300 mx-auto px-4 relative z-10">
+        <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">
             From Chaos to <span className="text-primary">Clarity</span>
           </h2>
@@ -549,6 +642,23 @@ const ComparisonSection = () => {
             Stop guessing with contaminated bins. SmartBin AI transforms your waste streams into
             clean, actionable data streams.
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          {comparisonStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-white/70 bg-white/80 px-6 py-5 shadow-sm"
+            >
+              <div className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                {stat.label}
+              </div>
+              <div className="mt-2 text-2xl font-display font-bold text-slate-900">
+                {stat.value}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">{stat.detail}</div>
+            </div>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 items-stretch">
@@ -573,6 +683,14 @@ const ComparisonSection = () => {
                   <X className="text-red-400 w-4 h-4" /> Zero data visibility
                 </li>
               </ul>
+              <div className="flex flex-wrap gap-3 text-xs text-red-500">
+                <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1">
+                  Data silos
+                </span>
+                <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1">
+                  Compliance risk
+                </span>
+              </div>
             </div>
             <div
               className="h-64 w-full bg-cover bg-center mt-auto opacity-40 mix-blend-multiply group-hover:mix-blend-normal transition-all duration-500"
@@ -604,6 +722,14 @@ const ComparisonSection = () => {
                   <Check className="text-secondary w-4 h-4" /> Granular carbon tracking
                 </li>
               </ul>
+              <div className="flex flex-wrap gap-3 text-xs text-primary">
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
+                  Live telemetry
+                </span>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
+                  Export-ready
+                </span>
+              </div>
             </div>
 
             <div className="h-64 w-full mt-auto relative z-10 p-6 pt-0 flex flex-col justify-end">
@@ -653,17 +779,31 @@ const ImpactCalculator = () => {
         className="absolute top-0 right-0 w-full h-full opacity-[0.03] pointer-events-none"
         style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}
       ></div>
+      <div className="absolute -top-24 left-[10%] h-64 w-64 rounded-full bg-emerald-400/10 blur-[120px]"></div>
+      <div className="absolute bottom-[-20%] right-[8%] h-72 w-72 rounded-full bg-sky-400/10 blur-[140px]"></div>
 
       <div className="max-w-250 mx-auto px-4 relative z-10">
         <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-2xl shadow-slate-200">
           <div className="flex flex-col md:flex-row gap-12">
             <div className="flex-1 flex flex-col justify-center">
-              <h2 className="text-3xl font-display font-bold text-slate-900 mb-6">
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] text-white w-fit">
+                Impact Calculator
+              </span>
+              <h2 className="mt-6 text-3xl font-display font-bold text-slate-900 mb-4">
                 Calculate Your Impact
               </h2>
               <p className="text-slate-500 mb-8">
                 See how much CO2 and waste diversion cost you could save by switching to SmartBin AI.
               </p>
+
+              <div className="flex flex-wrap gap-3 mb-8">
+                <div className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700">
+                  Live sustainability score
+                </div>
+                <div className="rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-700">
+                  Export-ready ESG data
+                </div>
+              </div>
 
               <div className="mb-8">
                 <div className="flex justify-between mb-2">
@@ -723,6 +863,9 @@ const ImpactCalculator = () => {
               <button className="mt-8 w-full py-3 rounded-lg gradient-bg text-white font-bold text-sm hover:shadow-lg transition-all">
                 Get Full Report
               </button>
+              <div className="mt-4 text-xs text-slate-400">
+                Includes custom waste audit and ROI analysis.
+              </div>
             </div>
           </div>
         </div>
@@ -738,9 +881,15 @@ const Pricing = () => {
     <section id="pricing" className="py-24 bg-slate-50">
       <div className="max-w-300 mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
+            Pricing
+          </span>
+          <h2 className="mt-6 text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">
             Simple, Transparent Pricing
           </h2>
+          <p className="text-slate-500 max-w-xl mx-auto mb-6">
+            Start with a small pilot or roll out across the entire campus. Scale as you grow.
+          </p>
           <div className="inline-flex bg-white rounded-full p-1 border border-slate-200 shadow-sm">
             <button
               onClick={() => setPeriod('monthly')}
@@ -830,6 +979,21 @@ const Pricing = () => {
             </button>
           </div>
         </div>
+
+        <div className="mt-12 rounded-2xl border border-white/70 bg-white/80 p-6 text-center shadow-sm">
+          <div className="text-xs uppercase tracking-[0.35em] text-slate-400 mb-2">All Plans</div>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-600">
+            <span className="flex items-center gap-2">
+              <Check className="text-secondary w-4 h-4" /> Installation & onboarding
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="text-secondary w-4 h-4" /> Live dashboard access
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="text-secondary w-4 h-4" /> Quarterly optimization review
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -839,6 +1003,28 @@ const Footer = () => {
   return (
     <footer className="border-t border-slate-200 bg-white pt-16 pb-8">
       <div className="max-w-300 mx-auto px-4">
+        <div className="mb-16 rounded-3xl bg-slate-900 px-8 py-10 text-white shadow-2xl shadow-slate-900/20">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div>
+              <div className="text-xs uppercase tracking-[0.4em] text-emerald-200 mb-3">
+                Ready to deploy
+              </div>
+              <h3 className="text-3xl font-display font-bold">Bring SmartBin AI to your campus.</h3>
+              <p className="mt-3 text-white/70 max-w-xl">
+                Schedule a guided walkthrough and get a tailored impact projection for your facility.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button className="h-12 rounded-full bg-emerald-400 px-8 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950">
+                Book a Demo
+              </button>
+              <button className="h-12 rounded-full border border-white/30 bg-white/10 px-8 text-sm font-semibold uppercase tracking-[0.2em] text-white">
+                Talk to Sales
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
           <div className="md:w-1/3">
             <div className="flex items-center gap-3 mb-6">
@@ -869,12 +1055,12 @@ const Footer = () => {
               <h4 className="text-slate-900 font-bold mb-4 font-display">Product</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li>
-                  <a href="#" className="hover:text-primary transition-colors">
+                  <a href="#features" className="hover:text-primary transition-colors">
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary transition-colors">
+                  <a href="#pricing" className="hover:text-primary transition-colors">
                     Pricing
                   </a>
                 </li>
@@ -966,4 +1152,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-

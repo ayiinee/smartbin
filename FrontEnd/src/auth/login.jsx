@@ -34,14 +34,14 @@ const Login = () => {
           </p>
           <div className="mt-8 flex gap-6">
             <div className="flex flex-col">
-              <span className="text-3xl font-bold text-secondary">12k+</span>
+              <span className="text-3xl font-bold text-emerald-100">12k+</span>
               <span className="text-sm text-emerald-200/70">
                 Smart Bins Active
               </span>
             </div>
             <div className="h-12 w-px bg-emerald-200/30" />
             <div className="flex flex-col">
-              <span className="text-3xl font-bold text-secondary">85%</span>
+              <span className="text-3xl font-bold text-emerald-100">85%</span>
               <span className="text-sm text-emerald-200/70">
                 Waste Reduction
               </span>
@@ -138,7 +138,7 @@ const Login = () => {
 
             <button
               type="submit"
-              className="group relative flex w-full items-center justify-center rounded-lg bg-linear-to-r from-primary to-accent px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:from-secondary hover:to-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="group relative flex w-full items-center justify-center rounded-lg bg-linear-to-r from-primary to-accent px-4 py-3.5 text-sm font-bold text-slate-900 shadow-lg shadow-primary/20 transition-all duration-300 hover:from-secondary hover:to-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               Sign in
               <span className="absolute right-4 top-3.5 translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100">
