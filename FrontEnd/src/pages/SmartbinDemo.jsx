@@ -2,9 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const WASTE_OPTIONS = [
-  "Plastic Bottles",
-  "Paper",
-  "Cans",
+  "Plastic",
   "Organic",
   "Residue",
   "Glass",
@@ -14,6 +12,7 @@ const WASTE_OPTIONS = [
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const DEBOUNCE_MS = 3000;
 const AUDIO_CAPTURE_MS = 2000;
+const VISUAL_POLL_MS = 1500;
 
 export default function SmartbinDemo() {
   const navigate = useNavigate();
@@ -38,6 +37,7 @@ export default function SmartbinDemo() {
   const [rmsLevel, setRmsLevel] = useState(0);
   const [threshold, setThreshold] = useState(0.4);
   const [statusLabel, setStatusLabel] = useState("MONITORING");
+  const [isMonitoring, setIsMonitoring] = useState(true);
 
   const detected = Boolean(latestVisual);
   const audioSummary = useMemo(() => {
@@ -98,6 +98,12 @@ export default function SmartbinDemo() {
       setSelectedWaste(WASTE_OPTIONS[0]);
     }
   }, [latestVisual]);
+
+  useEffect(() => {
+    if (!cameraReady) return;
+    setIsMonitoring(true);
+    setStatusLabel("MONITORING");
+  }, [cameraReady]);
 
   const encodeWav = (samples, sampleRate) => {
     const buffer = new ArrayBuffer(44 + samples.length * 2);
@@ -200,18 +206,25 @@ export default function SmartbinDemo() {
     });
   };
 
-  const runDetection = async () => {
+  const blobToDataUrl = (blob) =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+
+  const runDetection = async ({ includeAudio = false } = {}) => {
     if (isDetectingRef.current) return;
     isDetectingRef.current = true;
     setStatusLabel("DETECTING...");
     setVisualFeed("Detecting...");
-    setAudioFeed("Recording...");
+    if (includeAudio) {
+      setAudioFeed("Recording...");
+    }
 
     try {
-      const [imageBlob, audioBlob] = await Promise.all([
-        captureImageBlob(),
-        recordAudioSnippet(),
-      ]);
+      const imageBlob = await captureImageBlob();
+      const audioBlob = includeAudio ? await recordAudioSnippet() : null;
 
       if (!imageBlob && !audioBlob) {
         setStatusLabel("MONITORING");
@@ -238,6 +251,8 @@ export default function SmartbinDemo() {
 
       const visual = payload.visual || {};
       const audio = payload.audio || {};
+      const visualError = payload?.errors?.visual;
+      const audioError = payload?.errors?.audio;
 
       if (payload?.annotated_image) {
         const raw = payload.annotated_image;
@@ -245,11 +260,19 @@ export default function SmartbinDemo() {
           ? raw
           : `data:image/jpeg;base64,${raw}`;
         setAnnotatedImage(imageUrl);
+      } else if (imageBlob) {
+        const fallbackUrl = await blobToDataUrl(imageBlob);
+        if (typeof fallbackUrl === "string") {
+          setAnnotatedImage(fallbackUrl);
+        }
       } else {
         setAnnotatedImage("");
       }
 
-      if (visual?.label) {
+      if (visualError) {
+        setLatestVisual(null);
+        setVisualFeed(`Visual error: ${visualError}`);
+      } else if (visual?.label) {
         setLatestVisual({
           label: visual.label,
           confidence: visual.confidence || 0,
@@ -260,15 +283,20 @@ export default function SmartbinDemo() {
         setVisualFeed("No object detected");
       }
 
-      if (audio?.label) {
-        setLatestAudio({
-          label: audio.label,
-          confidence: audio.confidence || 0,
-        });
-        setAudioFeed(`${audio.label} (${Math.round((audio.confidence || 0) * 100)}%)`);
-      } else {
-        setLatestAudio(null);
-        setAudioFeed("No sound detected");
+      if (includeAudio) {
+        if (audioError) {
+          setLatestAudio(null);
+          setAudioFeed(`Audio error: ${audioError}`);
+        } else if (audio?.label) {
+          setLatestAudio({
+            label: audio.label,
+            confidence: audio.confidence || 0,
+          });
+          setAudioFeed(`${audio.label} (${Math.round((audio.confidence || 0) * 100)}%)`);
+        } else {
+          setLatestAudio(null);
+          setAudioFeed("No sound detected");
+        }
       }
 
       setStatusLabel("MONITORING");
@@ -282,7 +310,7 @@ export default function SmartbinDemo() {
   };
 
   useEffect(() => {
-    if (!cameraReady || !streamRef.current) return;
+    if (!cameraReady || !streamRef.current || !isMonitoring) return;
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContextRef.current = audioContext;
@@ -314,7 +342,7 @@ export default function SmartbinDemo() {
         now - lastTriggerRef.current > DEBOUNCE_MS
       ) {
         lastTriggerRef.current = now;
-        runDetection();
+        runDetection({ includeAudio: true });
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -331,7 +359,22 @@ export default function SmartbinDemo() {
         audioContextRef.current = null;
       }
     };
-  }, [cameraReady, threshold]);
+  }, [cameraReady, isMonitoring, threshold]);
+
+  useEffect(() => {
+    if (!cameraReady || !streamRef.current) return;
+
+    const triggerVisual = () => {
+      if (!isDetectingRef.current) {
+        runDetection({ includeAudio: false });
+      }
+    };
+
+    triggerVisual();
+    const intervalId = setInterval(triggerVisual, VISUAL_POLL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [cameraReady]);
 
   const handleConfirm = () => {
     setToast("Data saved!");
@@ -542,7 +585,7 @@ export default function SmartbinDemo() {
                 />
               </div>
               <div className="mt-2 text-[11px] text-[#6B7280]">
-                RMS: {rmsLevel.toFixed(3)} • Debounce {DEBOUNCE_MS}ms
+                RMS: {rmsLevel.toFixed(3)} - Debounce {DEBOUNCE_MS}ms
               </div>
             </div>
           </div>
