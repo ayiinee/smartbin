@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import "leaflet/dist/leaflet.css";
 
 * {
   box-sizing: border-box;
@@ -6,5 +8,23 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  background: #0b1412;
+  color: #e7f5ec;
+}
+
+:root {
+  --sb-ink: #0b1412;
+  --sb-forest: #0f2a1f;
+  --sb-emerald: #2fe37d;
+  --sb-mint: #b6f4d0;
+  --sb-copper: #ff8f4c;
+  --sb-sky: #7cc7ff;
+  --sb-stone: #b8c4be;
+  --sb-cloud: #eef4f1;
+}
+
+/* Prevent global img sizing rules from breaking Leaflet tiles. */
+.leaflet-container img {
+  max-width: none !important;
 }
