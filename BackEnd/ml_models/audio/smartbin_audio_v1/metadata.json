@@ -1,0 +1,9 @@
+{
+  "sample_rate": 16000,
+  "n_mfcc": 40,
+  "frame_length": 0.025,
+  "frame_stride": 0.01,
+  "max_duration_sec": 3.0,
+  "expected_input_shape": [40, 1, 1],
+  "notes": "Fill with training-time audio preprocessing params"
+}
