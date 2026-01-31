@@ -2,9 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const WASTE_OPTIONS = [
-  "Plastic Bottles",
-  "Paper",
-  "Cans",
+  "Plastic",
   "Organic",
   "Residue",
   "Glass",
@@ -14,6 +12,7 @@ const WASTE_OPTIONS = [
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const DEBOUNCE_MS = 3000;
 const AUDIO_CAPTURE_MS = 2000;
+const VISUAL_POLL_MS = 1500;
 
 export default function SmartbinDemo() {
   const navigate = useNavigate();
@@ -38,7 +37,7 @@ export default function SmartbinDemo() {
   const [rmsLevel, setRmsLevel] = useState(0);
   const [threshold, setThreshold] = useState(0.4);
   const [statusLabel, setStatusLabel] = useState("MONITORING");
-  const [isMonitoring, setIsMonitoring] = useState(false);
+  const [isMonitoring, setIsMonitoring] = useState(true);
 
   const detected = Boolean(latestVisual);
   const audioSummary = useMemo(() => {
@@ -99,6 +98,12 @@ export default function SmartbinDemo() {
       setSelectedWaste(WASTE_OPTIONS[0]);
     }
   }, [latestVisual]);
+
+  useEffect(() => {
+    if (!cameraReady) return;
+    setIsMonitoring(true);
+    setStatusLabel("MONITORING");
+  }, [cameraReady]);
 
   const encodeWav = (samples, sampleRate) => {
     const buffer = new ArrayBuffer(44 + samples.length * 2);
@@ -201,18 +206,25 @@ export default function SmartbinDemo() {
     });
   };
 
-  const runDetection = async () => {
+  const blobToDataUrl = (blob) =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+
+  const runDetection = async ({ includeAudio = false } = {}) => {
     if (isDetectingRef.current) return;
     isDetectingRef.current = true;
     setStatusLabel("DETECTING...");
     setVisualFeed("Detecting...");
-    setAudioFeed("Recording...");
+    if (includeAudio) {
+      setAudioFeed("Recording...");
+    }
 
     try {
-      const [imageBlob, audioBlob] = await Promise.all([
-        captureImageBlob(),
-        recordAudioSnippet(),
-      ]);
+      const imageBlob = await captureImageBlob();
+      const audioBlob = includeAudio ? await recordAudioSnippet() : null;
 
       if (!imageBlob && !audioBlob) {
         setStatusLabel("MONITORING");
@@ -248,6 +260,11 @@ export default function SmartbinDemo() {
           ? raw
           : `data:image/jpeg;base64,${raw}`;
         setAnnotatedImage(imageUrl);
+      } else if (imageBlob) {
+        const fallbackUrl = await blobToDataUrl(imageBlob);
+        if (typeof fallbackUrl === "string") {
+          setAnnotatedImage(fallbackUrl);
+        }
       } else {
         setAnnotatedImage("");
       }
@@ -266,18 +283,20 @@ export default function SmartbinDemo() {
         setVisualFeed("No object detected");
       }
 
-      if (audioError) {
-        setLatestAudio(null);
-        setAudioFeed(`Audio error: ${audioError}`);
-      } else if (audio?.label) {
-        setLatestAudio({
-          label: audio.label,
-          confidence: audio.confidence || 0,
-        });
-        setAudioFeed(`${audio.label} (${Math.round((audio.confidence || 0) * 100)}%)`);
-      } else {
-        setLatestAudio(null);
-        setAudioFeed("No sound detected");
+      if (includeAudio) {
+        if (audioError) {
+          setLatestAudio(null);
+          setAudioFeed(`Audio error: ${audioError}`);
+        } else if (audio?.label) {
+          setLatestAudio({
+            label: audio.label,
+            confidence: audio.confidence || 0,
+          });
+          setAudioFeed(`${audio.label} (${Math.round((audio.confidence || 0) * 100)}%)`);
+        } else {
+          setLatestAudio(null);
+          setAudioFeed("No sound detected");
+        }
       }
 
       setStatusLabel("MONITORING");
@@ -323,7 +342,7 @@ export default function SmartbinDemo() {
         now - lastTriggerRef.current > DEBOUNCE_MS
       ) {
         lastTriggerRef.current = now;
-        runDetection();
+        runDetection({ includeAudio: true });
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -342,30 +361,20 @@ export default function SmartbinDemo() {
     };
   }, [cameraReady, isMonitoring, threshold]);
 
-  const handleToggleMonitoring = async () => {
-    if (!cameraReady) return;
-    if (isMonitoring) {
-      setIsMonitoring(false);
-      setStatusLabel("PAUSED");
-      setVisualFeed("Waiting for object...");
-      setAudioFeed("Listening...");
-      return;
-    }
-    setIsMonitoring(true);
-    setStatusLabel("MONITORING");
-    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-      try {
-        await audioContextRef.current.resume();
-      } catch (error) {
-        // Ignore resume errors; browser will handle user gesture constraints.
-      }
-    }
-  };
+  useEffect(() => {
+    if (!cameraReady || !streamRef.current) return;
 
-  const handleManualDetect = () => {
-    if (!cameraReady) return;
-    runDetection();
-  };
+    const triggerVisual = () => {
+      if (!isDetectingRef.current) {
+        runDetection({ includeAudio: false });
+      }
+    };
+
+    triggerVisual();
+    const intervalId = setInterval(triggerVisual, VISUAL_POLL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [cameraReady]);
 
   const handleConfirm = () => {
     setToast("Data saved!");
@@ -442,23 +451,6 @@ export default function SmartbinDemo() {
                   />
                 ) : null}
               </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleToggleMonitoring}
-                className="rounded-full border border-[#228B22] bg-[#E7F6E7] px-4 py-2 text-sm font-semibold text-[#228B22] transition hover:bg-[#D8F0D8]"
-              >
-                {isMonitoring ? "Stop Detection" : "Start Detection"}
-              </button>
-              <button
-                type="button"
-                onClick={handleManualDetect}
-                className="rounded-full border border-[#1F2937] px-4 py-2 text-sm font-semibold text-[#1F2937] transition hover:bg-[#F1F5F9]"
-              >
-                Detect Now
-              </button>
             </div>
 
             {detected && (
@@ -593,7 +585,7 @@ export default function SmartbinDemo() {
                 />
               </div>
               <div className="mt-2 text-[11px] text-[#6B7280]">
-                RMS: {rmsLevel.toFixed(3)} • Debounce {DEBOUNCE_MS}ms
+                RMS: {rmsLevel.toFixed(3)} - Debounce {DEBOUNCE_MS}ms
               </div>
             </div>
           </div>
