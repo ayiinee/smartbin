@@ -1,8 +1,6 @@
-import { NavLink, useLocation } from "react-router-dom";
-
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", path: "/dashboard" },
-  { label: "Analytics & Reports", icon: "chart", path: "/analytics-reports" },
+  { label: "Dashboard", icon: "grid", active: true },
+  { label: "Analytics & Reports", icon: "chart" },
   { label: "AI Validation", icon: "brain" },
   { label: "SmartBin Units", icon: "bin" },
   { label: "Settings", icon: "gear" },
@@ -29,9 +27,11 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12M9 9h6M9 15h6" />
     </svg>
   ),
-  bin: (
+  education: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V5h6v2m-8 0l1 13h8l1-13" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4-9 4-9-4 9-4z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v4c0 1.1 3.1 3 7 3s7-1.9 7-3v-4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v7" />
     </svg>
   ),
   gear: (
@@ -57,27 +57,17 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.path &&
-            (location.pathname === item.path ||
-              (item.path === "/dashboard" && location.pathname === "/"));
-          const baseClass = `group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-            isActive
-              ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
-              : "text-[#475569] hover:bg-[#F1F5F9]"
-          }`;
-
-          if (item.path) {
-            return (
-              <NavLink key={item.label} to={item.path} className={baseClass} aria-current={isActive ? "page" : undefined}>
-                <span className="text-current">{iconMap[item.icon]}</span>
-                <span className="hidden lg:inline">{item.label}</span>
-              </NavLink>
-            );
-          }
-
+          const isActive = item.active;
           return (
-            <button key={item.label} type="button" className={baseClass}>
+            <button
+              key={item.label}
+              type="button"
+              className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+                isActive
+                  ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
+                  : "text-[#475569] hover:bg-[#F1F5F9]"
+              }`}
+            >
               <span className="text-current">{iconMap[item.icon]}</span>
               <span className="hidden lg:inline">{item.label}</span>
             </button>
