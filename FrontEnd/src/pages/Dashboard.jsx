@@ -252,7 +252,7 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-screen bg-[#F5F7F5] text-[#333333]">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(34,139,34,0.12),_rgba(245,247,245,0.95)_45%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,139,34,0.12),rgba(245,247,245,0.95)45%)]" />
       <div className="min-h-screen">
         <DashboardSidebar />
 
@@ -289,7 +289,7 @@ export default function Dashboard() {
             </section>
 
             <section className="relative mt-10 overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm">
-              <div className="relative isolate h-[70vh] min-h-[520px] w-full overflow-hidden bg-[#E9F0EA]">
+              <div className="relative isolate h-[70vh] min-h-130 w-full overflow-hidden bg-[#E9F0EA]">
                 <MapContainer
                   center={[-7.9771, 112.634]}
                   zoom={12}

@@ -1,9 +1,11 @@
+import { NavLink } from "react-router-dom";
+
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "grid", active: true },
-  { label: "Analytics & Reports", icon: "chart" },
-  { label: "AI Validation", icon: "brain" },
-  { label: "SmartBin Units", icon: "bin" },
-  { label: "Settings", icon: "gear" },
+  { label: "Dashboard", icon: "grid", to: "/dashboard" },
+  { label: "Analytics & Reports", icon: "chart", disabled: true },
+  { label: "AI Validation", icon: "brain", to: "/ai-validation" },
+  { label: "SmartBin Units", icon: "bin", disabled: true },
+  { label: "Settings", icon: "gear", disabled: true },
 ];
 
 const iconMap = {
@@ -53,16 +55,31 @@ export default function DashboardSidebar() {
 
       <nav className="mt-10 flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.active;
+          if (item.to) {
+            return (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                end={item.to === "/dashboard"}
+                className={({ isActive }) =>
+                  `group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+                    isActive
+                      ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
+                      : "text-[#475569] hover:bg-[#F1F5F9]"
+                  }`
+                }
+              >
+                <span className="text-current">{iconMap[item.icon]}</span>
+                <span className="hidden lg:inline">{item.label}</span>
+              </NavLink>
+            );
+          }
+
           return (
             <button
               key={item.label}
               type="button"
-              className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-                isActive
-                  ? "border border-[#228B22] bg-[#E7F6E7] text-[#228B22]"
-                  : "text-[#475569] hover:bg-[#F1F5F9]"
-              }`}
+              className="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-[#94A3B8] opacity-70"
             >
               <span className="text-current">{iconMap[item.icon]}</span>
               <span className="hidden lg:inline">{item.label}</span>
